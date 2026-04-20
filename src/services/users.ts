@@ -20,3 +20,8 @@ export async function deactivateUser(userId: number) {
   const { data } = await api.post(`/admin/users/${userId}/deactivate`);
   return data;
 }
+
+export async function activateUser(userId: number) {
+  const { data } = await api.post(`/admin/users/${userId}/activate`);
+  return data;
+}
