@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { activateUser, createUser, deactivateUser, getUserLicenses, listUsers } from '../services/users';
+import { activateUser, createUser, deactivateUser, deleteUser, getUserLicenses, listUsers } from '../services/users';
+import type { License, User } from '../types';
 import { useToast } from '../components/Toasts';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function Users() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('password123');
+  const [appName, setAppName] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [pendingDeleteUser, setPendingDeleteUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
   const { push } = useToast();
 
@@ -17,10 +21,26 @@ export default function Users() {
     enabled: Boolean(selectedUserId)
   });
 
+  const updateUserCache = (userId: number, isActive: boolean) => {
+    queryClient.setQueryData<User[]>(['users'], (current) =>
+      current?.map((user) => (user.id === userId ? { ...user, is_active: isActive } : user)) ?? current
+    );
+
+    if (selectedUserId !== userId) return;
+
+    queryClient.setQueryData<License[]>(['user-licenses', userId], (current) =>
+      current?.map((license) => ({
+        ...license,
+        is_active: isActive && (!license.expiry_date || new Date(license.expiry_date) >= new Date())
+      })) ?? current
+    );
+  };
+
   const createMutation = useMutation({
     mutationFn: createUser,
     onSuccess: () => {
       setUsername('');
+      setAppName('');
       queryClient.invalidateQueries({ queryKey: ['users'] });
       push({ type: 'success', title: 'User created' });
     }
@@ -28,17 +48,123 @@ export default function Users() {
 
   const deactivateMutation = useMutation({
     mutationFn: deactivateUser,
+    onMutate: async (userId) => {
+      await queryClient.cancelQueries({ queryKey: ['users'] });
+      await queryClient.cancelQueries({ queryKey: ['licenses'] });
+      await queryClient.cancelQueries({ queryKey: ['user-licenses'] });
+
+      const previousUsers = queryClient.getQueryData<User[]>(['users']);
+      const previousUserLicenses = queryClient.getQueriesData({ queryKey: ['user-licenses'] });
+
+      updateUserCache(userId, false);
+
+      return { previousUsers, previousUserLicenses };
+    },
+    onError: (_error, _userId, context) => {
+      if (context?.previousUsers) {
+        queryClient.setQueryData(['users'], context.previousUsers);
+      }
+      context?.previousUserLicenses?.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      push({ type: 'error', title: 'Failed to deactivate user' });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
       push({ type: 'info', title: 'User deactivated' });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['licenses'] });
+      queryClient.invalidateQueries({ queryKey: ['user-licenses'] });
     }
   });
 
   const activateMutation = useMutation({
     mutationFn: activateUser,
+    onMutate: async (userId) => {
+      await queryClient.cancelQueries({ queryKey: ['users'] });
+      await queryClient.cancelQueries({ queryKey: ['licenses'] });
+      await queryClient.cancelQueries({ queryKey: ['user-licenses'] });
+
+      const previousUsers = queryClient.getQueryData<User[]>(['users']);
+      const previousUserLicenses = queryClient.getQueriesData({ queryKey: ['user-licenses'] });
+
+      updateUserCache(userId, true);
+
+      return { previousUsers, previousUserLicenses };
+    },
+    onError: (_error, _userId, context) => {
+      if (context?.previousUsers) {
+        queryClient.setQueryData(['users'], context.previousUsers);
+      }
+      context?.previousUserLicenses?.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      push({ type: 'error', title: 'Failed to activate user' });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
       push({ type: 'success', title: 'User activated' });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['licenses'] });
+      queryClient.invalidateQueries({ queryKey: ['user-licenses'] });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteUser,
+    onMutate: async (userId) => {
+      await queryClient.cancelQueries({ queryKey: ['users'] });
+      await queryClient.cancelQueries({ queryKey: ['licenses'] });
+      await queryClient.cancelQueries({ queryKey: ['user-licenses'] });
+
+      const previousUsers = queryClient.getQueryData<User[]>(['users']);
+      const previousLicenses = queryClient.getQueriesData({ queryKey: ['licenses'] });
+      const previousUserLicenses = queryClient.getQueriesData({ queryKey: ['user-licenses'] });
+
+      queryClient.setQueryData<User[]>(['users'], (current) => current?.filter((user) => user.id !== userId) ?? current);
+
+      if (selectedUserId === userId) {
+        setSelectedUserId(null);
+      }
+
+      queryClient.setQueriesData({ queryKey: ['licenses'] }, (current: { items?: License[] } | undefined) => {
+        if (!current?.items) return current;
+        return {
+          ...current,
+          items: current.items.map((license) =>
+            license.owner_id === userId
+              ? { ...license, owner_id: null, owner_username: null, hwid: null, is_active: false }
+              : license
+          )
+        };
+      });
+
+      queryClient.removeQueries({ queryKey: ['user-licenses', userId], exact: true });
+
+      return { previousUsers, previousLicenses, previousUserLicenses };
+    },
+    onError: (_error, _userId, context) => {
+      if (context?.previousUsers) {
+        queryClient.setQueryData(['users'], context.previousUsers);
+      }
+      context?.previousLicenses?.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      context?.previousUserLicenses?.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      push({ type: 'error', title: 'Failed to delete user' });
+    },
+    onSuccess: () => {
+      push({ type: 'success', title: 'User deleted' });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['licenses'] });
+      queryClient.invalidateQueries({ queryKey: ['user-licenses'] });
+      setPendingDeleteUser(null);
     }
   });
 
@@ -53,6 +179,7 @@ export default function Users() {
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                 <tr>
                   <th className="px-3 py-2 whitespace-nowrap">Username</th>
+                  <th className="px-3 py-2 whitespace-nowrap">App</th>
                   <th className="px-3 py-2 whitespace-nowrap">Role</th>
                   <th className="px-3 py-2 whitespace-nowrap">Status</th>
                   <th className="px-3 py-2" />
@@ -62,6 +189,7 @@ export default function Users() {
                 {usersQuery.data?.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-3 py-2 font-medium whitespace-nowrap">{user.username}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-slate-600">{user.app_name ?? '—'}</td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                         user.role === 'admin'
@@ -105,6 +233,13 @@ export default function Users() {
                             Deactivate
                           </button>
                         )}
+                        <button
+                          className="rounded-lg px-2 py-1 text-xs text-rose-700 hover:bg-rose-50 whitespace-nowrap disabled:opacity-50"
+                          onClick={() => setPendingDeleteUser(user)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -132,10 +267,16 @@ export default function Users() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
+            <input
+              className="input"
+              placeholder="App name"
+              value={appName}
+              onChange={(event) => setAppName(event.target.value)}
+            />
             <button
               className="btn-primary w-full"
-              onClick={() => createMutation.mutate({ username, password, role: 'user' })}
-              disabled={!username.trim() || createMutation.isPending}
+              onClick={() => createMutation.mutate({ username, password, app_name: appName.trim(), role: 'user' })}
+              disabled={!username.trim() || !appName.trim() || createMutation.isPending}
             >
               {createMutation.isPending ? 'Creating…' : 'Create user'}
             </button>
@@ -161,6 +302,25 @@ export default function Users() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingDeleteUser)}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteUser(null);
+        }}
+        title="Delete user"
+        description={
+          pendingDeleteUser
+            ? `Delete user "${pendingDeleteUser.username}"? Their assigned licenses will be released and the UI will refresh immediately.`
+            : ''
+        }
+        confirmLabel="Delete user"
+        onConfirm={() => {
+          if (pendingDeleteUser) {
+            deleteMutation.mutate(pendingDeleteUser.id);
+          }
+        }}
+      />
     </section>
   );
 }

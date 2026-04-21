@@ -4,9 +4,9 @@ import type { AuditEvent, License, User } from '../types';
 const now = new Date();
 
 export const users: User[] = [
-  { id: 1, username: 'alice', email: 'alice@acme.local', role: 'user', is_active: true, created_at: now.toISOString() },
-  { id: 2, username: 'bob', email: 'bob@acme.local', role: 'user', is_active: true, created_at: now.toISOString() },
-  { id: 3, username: 'ops-admin', email: 'ops@acme.local', role: 'admin', is_active: true, created_at: now.toISOString() }
+  { id: 1, username: 'alice', email: 'alice@acme.local', app_name: 'Tool Reup', role: 'user', is_active: true, created_at: now.toISOString() },
+  { id: 2, username: 'bob', email: 'bob@acme.local', app_name: 'Tool Reup', role: 'user', is_active: true, created_at: now.toISOString() },
+  { id: 3, username: 'ops-admin', email: 'ops@acme.local', app_name: 'Admin Console', role: 'admin', is_active: true, created_at: now.toISOString() }
 ];
 
 export let licenses: License[] = [

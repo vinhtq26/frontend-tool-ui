@@ -28,18 +28,11 @@ interface AuthContextValue extends AuthState {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function decodeToken(token: string): Pick<AuthState, 'role' | 'username'> {
-  function inferRole(decoded: TokenPayload): Role | null {
-    if (decoded.role) return decoded.role;
-    if (decoded.is_admin || decoded.isAdmin) return 'admin';
-    // Fallback: nếu backend chưa trả role, dùng sub === 'admin' làm dấu hiệu
-    if (decoded.sub === 'admin') return 'admin';
-    return 'user';
-  }
-
   try {
     const decoded = jwtDecode<TokenPayload>(token);
+    const role = decoded.role ?? (decoded.is_admin || decoded.isAdmin ? 'admin' : 'user');
     return {
-      role: inferRole(decoded),
+      role,
       username: decoded.username ?? decoded.sub ?? null
     };
   } catch {
@@ -49,7 +42,8 @@ function decodeToken(token: string): Pick<AuthState, 'role' | 'username'> {
         return { role: null, username: null };
       }
       const decoded = JSON.parse(atob(segment)) as TokenPayload;
-      return { role: inferRole(decoded), username: decoded.username ?? decoded.sub ?? null };
+      const role = decoded.role ?? (decoded.is_admin || decoded.isAdmin ? 'admin' : 'user');
+      return { role, username: decoded.username ?? decoded.sub ?? null };
     } catch {
       return {
         role: null,

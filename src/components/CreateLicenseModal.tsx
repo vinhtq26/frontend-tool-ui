@@ -4,7 +4,7 @@ import { useState } from 'react';
 interface CreateLicenseModalProps {
   open: boolean;
   onOpenChange: (value: boolean) => void;
-  onSubmit: (payload: { duration_days: number; username?: string }) => Promise<void>;
+  onSubmit: (payload: { duration_days: number; username?: string }) => Promise<unknown>;
 }
 
 export default function CreateLicenseModal({ open, onOpenChange, onSubmit }: CreateLicenseModalProps) {

@@ -6,7 +6,7 @@ export async function listUsers() {
   return data;
 }
 
-export async function createUser(payload: { username: string; password: string; email?: string; role?: string }) {
+export async function createUser(payload: { username: string; password: string; email?: string; app_name?: string; role?: string }) {
   const { data } = await api.post<User>('/register', payload);
   return data;
 }
@@ -17,11 +17,16 @@ export async function getUserLicenses(userId: number) {
 }
 
 export async function deactivateUser(userId: number) {
-  const { data } = await api.post(`/admin/users/${userId}/deactivate`);
+  const { data } = await api.post<User>(`/admin/users/${userId}/deactivate`);
   return data;
 }
 
 export async function activateUser(userId: number) {
-  const { data } = await api.post(`/admin/users/${userId}/activate`);
+  const { data } = await api.post<User>(`/admin/users/${userId}/activate`);
+  return data;
+}
+
+export async function deleteUser(userId: number) {
+  const { data } = await api.delete<{ success: boolean }>(`/admin/users/${userId}`);
   return data;
 }

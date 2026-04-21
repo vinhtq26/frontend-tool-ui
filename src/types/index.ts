@@ -8,6 +8,7 @@ export interface User {
   id: number;
   username: string;
   email?: string;
+  app_name?: string;
   is_active?: boolean;
   role?: Role;
   created_at: string;
@@ -32,7 +33,7 @@ export interface PaginatedResponse<T> {
 
 export interface AuditEvent {
   id: string;
-  event: 'created' | 'activated' | 'assigned' | 'revoked' | 'renewed' | 'deactivated';
+  event: 'created' | 'activated' | 'assigned' | 'revoked' | 'renewed' | 'deactivated' | 'deleted';
   actor: string;
   timestamp: string;
   target: string;

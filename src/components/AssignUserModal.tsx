@@ -4,7 +4,7 @@ import { useState } from 'react';
 interface AssignUserModalProps {
   open: boolean;
   onOpenChange: (value: boolean) => void;
-  onSubmit: (username: string) => Promise<void>;
+  onSubmit: (username: string) => Promise<unknown>;
 }
 
 export default function AssignUserModal({ open, onOpenChange, onSubmit }: AssignUserModalProps) {

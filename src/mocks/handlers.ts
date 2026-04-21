@@ -44,11 +44,18 @@ export const handlers = [
   }),
 
   http.post('/register', async ({ request }) => {
-    const body = (await request.json()) as { username: string; password?: string; email?: string; role?: 'admin' | 'user' };
+    const body = (await request.json()) as {
+      username: string;
+      password?: string;
+      email?: string;
+      app_name?: string;
+      role?: 'admin' | 'user';
+    };
     const created = {
       id: users.length + 1,
       username: body.username.trim(),
       email: body.email,
+      app_name: body.app_name?.trim() || 'Default App',
       role: body.role ?? 'user',
       is_active: true,
       created_at: new Date().toISOString()
@@ -172,7 +179,47 @@ export const handlers = [
     const user = users.find((item) => item.id === Number(params.id));
     if (!user) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
     user.is_active = false;
+    licenses.forEach((license) => {
+      if (license.owner_id === user.id) {
+        license.is_active = false;
+      }
+    });
+    appendAudit({ event: 'deactivated', actor: 'ops-admin', target: user.username, detail: 'User deactivated from admin panel' });
     return HttpResponse.json(user);
+  }),
+
+  http.post('/admin/users/:id/activate', ({ params }) => {
+    const user = users.find((item) => item.id === Number(params.id));
+    if (!user) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
+    user.is_active = true;
+    licenses.forEach((license) => {
+      const isOwnedByUser = license.owner_id === user.id;
+      const isExpired = Boolean(license.expiry_date && new Date(license.expiry_date) < new Date());
+      if (isOwnedByUser && !isExpired) {
+        license.is_active = true;
+      }
+    });
+    appendAudit({ event: 'activated', actor: 'ops-admin', target: user.username, detail: 'User activated from admin panel' });
+    return HttpResponse.json(user);
+  }),
+
+  http.delete('/admin/users/:id', ({ params }) => {
+    const userIndex = users.findIndex((item) => item.id === Number(params.id));
+    if (userIndex === -1) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
+
+    const [removedUser] = users.splice(userIndex, 1);
+
+    licenses.forEach((license) => {
+      if (license.owner_id === removedUser.id) {
+        license.owner_id = null;
+        license.owner_username = null;
+        license.hwid = null;
+        license.is_active = false;
+      }
+    });
+
+    appendAudit({ event: 'deleted', actor: 'ops-admin', target: removedUser.username, detail: 'User deleted from admin panel' });
+    return HttpResponse.json({ success: true });
   }),
 
   http.get('/admin/audit', ({ request }) => {
