@@ -11,8 +11,10 @@ export async function createUser(payload: { username: string; password: string; 
   return data;
 }
 
-export async function getUserLicenses(userId: number) {
-  const { data } = await api.get<License[]>(`/admin/users/${userId}/licenses`);
+export async function getUserLicenses(userId: number, appName?: string) {
+  const { data } = await api.get<License[]>(`/admin/users/${userId}/licenses`, {
+    params: appName ? { app_name: appName } : undefined
+  });
   return data;
 }
 

@@ -12,6 +12,7 @@ export const users: User[] = [
 export let licenses: License[] = [
   {
     license_key: '9kS2f3_ABCxyzQ-001',
+    license_token: 'lic_tok_alice_001x8Kp2',
     owner_id: 1,
     owner_username: 'alice',
     hwid: 'hwid-123',
@@ -23,6 +24,7 @@ export let licenses: License[] = [
   },
   {
     license_key: '9kS2f3_ABCxyzQ-002',
+    license_token: 'lic_tok_pool_002mN4z7',
     owner_id: null,
     owner_username: null,
     hwid: null,
@@ -34,6 +36,7 @@ export let licenses: License[] = [
   },
   {
     license_key: '9kS2f3_ABCxyzQ-003',
+    license_token: 'lic_tok_bob_003qR6t1',
     owner_id: 2,
     owner_username: 'bob',
     hwid: 'hwid-789',

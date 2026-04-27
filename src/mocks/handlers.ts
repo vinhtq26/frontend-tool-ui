@@ -27,6 +27,10 @@ function decodeToken(token?: string) {
   }
 }
 
+function buildLicenseToken() {
+  return `lic_tok_${Math.random().toString(36).slice(2, 16)}`;
+}
+
 export const handlers = [
   http.post('/login', async ({ request }) => {
     const body = (await request.json()) as { username: string; password: string };
@@ -118,6 +122,7 @@ export const handlers = [
     const body = (await request.json()) as { duration_days: number };
     const created: License = {
       license_key: `NEW-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+      license_token: buildLicenseToken(),
       owner_id: null,
       owner_username: null,
       hwid: null,

@@ -2,10 +2,14 @@ import axios from 'axios';
 import { authStorage } from '../contexts/AuthContext';
 
 const useMsw = import.meta.env.VITE_USE_MSW === 'true';
+const configuredBaseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://backend-tool-manager.onrender.com';
+const resolvedBaseURL = useMsw ? '/' : import.meta.env.DEV ? '/api' : configuredBaseURL;
+
+console.log('[API] Connecting to host:', resolvedBaseURL);
 
 const api = axios.create({
   // In mock mode, keep requests same-origin so the MSW service worker can intercept them.
-  baseURL: useMsw ? '/' : (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'),
+  baseURL: resolvedBaseURL,
   timeout: 10_000,
   withCredentials: true
 });

@@ -9,16 +9,16 @@ export default function Users() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('password123');
   const [appName, setAppName] = useState('');
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [pendingDeleteUser, setPendingDeleteUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
   const { push } = useToast();
 
   const usersQuery = useQuery({ queryKey: ['users'], queryFn: listUsers });
   const licensesQuery = useQuery({
-    queryKey: ['user-licenses', selectedUserId],
-    queryFn: () => getUserLicenses(selectedUserId!),
-    enabled: Boolean(selectedUserId)
+    queryKey: ['user-licenses', selectedUser?.id, selectedUser?.app_name],
+    queryFn: () => getUserLicenses(selectedUser!.id, selectedUser?.app_name),
+    enabled: Boolean(selectedUser)
   });
 
   const updateUserCache = (userId: number, isActive: boolean) => {
@@ -26,9 +26,9 @@ export default function Users() {
       current?.map((user) => (user.id === userId ? { ...user, is_active: isActive } : user)) ?? current
     );
 
-    if (selectedUserId !== userId) return;
+    if (selectedUser?.id !== userId) return;
 
-    queryClient.setQueryData<License[]>(['user-licenses', userId], (current) =>
+    queryClient.setQueryData<License[]>(['user-licenses', selectedUser?.id, selectedUser?.app_name], (current) =>
       current?.map((license) => ({
         ...license,
         is_active: isActive && (!license.expiry_date || new Date(license.expiry_date) >= new Date())
@@ -125,8 +125,8 @@ export default function Users() {
 
       queryClient.setQueryData<User[]>(['users'], (current) => current?.filter((user) => user.id !== userId) ?? current);
 
-      if (selectedUserId === userId) {
-        setSelectedUserId(null);
+      if (selectedUser?.id === userId) {
+        setSelectedUser(null);
       }
 
       queryClient.setQueriesData({ queryKey: ['licenses'] }, (current: { items?: License[] } | undefined) => {
@@ -141,7 +141,7 @@ export default function Users() {
         };
       });
 
-      queryClient.removeQueries({ queryKey: ['user-licenses', userId], exact: true });
+      queryClient.removeQueries({ queryKey: ['user-licenses', userId], exact: false });
 
       return { previousUsers, previousLicenses, previousUserLicenses };
     },
@@ -212,7 +212,7 @@ export default function Users() {
                       <div className="flex flex-col items-end gap-1 sm:flex-row sm:justify-end">
                         <button
                           className="btn-secondary !h-7 !px-2 !py-0 !text-xs whitespace-nowrap"
-                          onClick={() => setSelectedUserId(user.id)}
+                          onClick={() => setSelectedUser(user)}
                         >
                           View licenses
                         </button>
@@ -285,17 +285,26 @@ export default function Users() {
 
         <div className="card overflow-hidden">
           <h3 className="text-base font-semibold text-slate-900">User licenses</h3>
-          {!selectedUserId ? (
+          {!selectedUser ? (
             <p className="mt-3 text-sm text-slate-500">Select a user to view their licenses.</p>
           ) : licensesQuery.isLoading ? (
             <p className="mt-3 text-sm text-slate-400">Loading…</p>
           ) : licensesQuery.data?.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">No licenses found for this user.</p>
           ) : null}
+          {selectedUser ? (
+            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+              <p className="font-medium text-slate-900">{selectedUser.username}</p>
+              <p className="text-xs text-slate-500">App: {selectedUser.app_name ?? '—'}</p>
+            </div>
+          ) : null}
           <div className="mt-3 space-y-2 text-sm">
             {licensesQuery.data?.map((license) => (
               <div key={license.license_key} className="rounded-lg border border-slate-200 p-3 space-y-1">
                 <p className="font-mono text-xs break-all text-slate-800">{license.license_key}</p>
+                <p className="text-xs text-slate-500 break-all">
+                  License token: {license.license_token ?? license.token ?? '—'}
+                </p>
                 <p className="text-xs text-slate-500">HWID: {license.hwid ?? '—'}</p>
               </div>
             ))}

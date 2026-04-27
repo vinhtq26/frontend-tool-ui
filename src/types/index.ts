@@ -16,6 +16,8 @@ export interface User {
 
 export interface License {
   license_key: string;
+  license_token?: string | null;
+  token?: string | null;
   owner_id: number | null;
   owner_username?: string | null;
   hwid: string | null;
