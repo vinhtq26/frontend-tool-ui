@@ -2,13 +2,14 @@ import axios from 'axios';
 import { authStorage } from '../contexts/AuthContext';
 
 const useMsw = import.meta.env.VITE_USE_MSW === 'true';
-const configuredBaseURL = import.meta.env.VITE_API_BASE_URL ?? 'https://backend-tool-manager.onrender.com';
-const resolvedBaseURL = useMsw ? '/' : import.meta.env.DEV ? '/api' : configuredBaseURL;
+const backendBaseURL = import.meta.env.VITE_API_BASE_URL?.trim() || 'https://backend-tool-manager.onrender.com';
+const resolvedBaseURL = useMsw ? '/' : backendBaseURL;
 
 console.log('[API] Connecting to host:', resolvedBaseURL);
 
 const api = axios.create({
   // In mock mode, keep requests same-origin so the MSW service worker can intercept them.
+  // Otherwise always call the configured backend directly instead of going through a frontend proxy.
   baseURL: resolvedBaseURL,
   timeout: 10_000,
   withCredentials: true

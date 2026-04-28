@@ -65,6 +65,9 @@ yarn install
 cp .env.example .env
 ```
 
+Set `VITE_API_BASE_URL` to your real backend origin so the frontend calls the backend directly.
+Only enable `VITE_USE_MSW=true` when you intentionally want to run in mock mode.
+
 3. Start dev server
 
 ```bash
@@ -145,7 +148,7 @@ npm run cypress:open
 
 ## MSW Mock Mode
 
-Enable `VITE_USE_MSW=true` to run full UI flows without backend.
+Enable `VITE_USE_MSW=true` to run full UI flows without backend. When MSW is off, the app calls `VITE_API_BASE_URL` directly and does not rely on a Vite or Netlify proxy.
 
 Default mock users:
 
