@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { addDays } from 'date-fns';
-import { appendAudit, audits, licenses, users } from './data';
+import { appendAudit, applications, audits, licenses, users } from './data';
 import type { License } from '../types';
 
 function normalizeUsername(value?: string) {
@@ -121,6 +121,7 @@ export const handlers = [
   http.post('/admin/licenses', async ({ request }) => {
     const body = (await request.json()) as { duration_days: number };
     const created: License = {
+      id: Math.max(0, ...licenses.map((license) => license.id)) + 1,
       license_key: `NEW-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
       license_token: buildLicenseToken(),
       owner_id: null,
@@ -135,6 +136,36 @@ export const handlers = [
     licenses.unshift(created);
     appendAudit({ event: 'created', actor: 'ops-admin', target: created.license_key, detail: 'Created via dashboard' });
     return HttpResponse.json(created, { status: 201 });
+  }),
+
+  http.delete('/admin/licenses/batch', async ({ request }) => {
+    const body = (await request.json()) as { license_ids: number[] };
+    const deleted: number[] = [];
+    const notFound: number[] = [];
+    const skippedAssigned: Array<{ license_id: number; owner_id: number }> = [];
+
+    body.license_ids.forEach((licenseId) => {
+      const index = licenses.findIndex((license) => license.id === licenseId);
+      if (index === -1) {
+        notFound.push(licenseId);
+        return;
+      }
+      const license = licenses[index];
+      if (license.owner_id !== null) {
+        skippedAssigned.push({ license_id: licenseId, owner_id: license.owner_id });
+        return;
+      }
+      licenses.splice(index, 1);
+      deleted.push(licenseId);
+    });
+
+    return HttpResponse.json({
+      requested: body.license_ids.length,
+      deleted,
+      not_found: notFound,
+      skipped_assigned: skippedAssigned,
+      failed: []
+    });
   }),
 
   http.get('/admin/licenses/:licenseKey', ({ params }) => {
@@ -174,6 +205,37 @@ export const handlers = [
   }),
 
   http.get('/admin/users', () => HttpResponse.json(users)),
+
+  http.delete('/admin/users/batch', async ({ request }) => {
+    const body = (await request.json()) as { user_ids: number[] };
+    const deleted: number[] = [];
+    const notFound: number[] = [];
+    let deletedLicenseCount = 0;
+
+    body.user_ids.forEach((userId) => {
+      const userIndex = users.findIndex((user) => user.id === userId);
+      if (userIndex === -1) {
+        notFound.push(userId);
+        return;
+      }
+      users.splice(userIndex, 1);
+      deleted.push(userId);
+      for (let index = licenses.length - 1; index >= 0; index -= 1) {
+        if (licenses[index].owner_id === userId) {
+          licenses.splice(index, 1);
+          deletedLicenseCount += 1;
+        }
+      }
+    });
+
+    return HttpResponse.json({
+      requested: body.user_ids.length,
+      deleted,
+      not_found: notFound,
+      failed: [],
+      deleted_license_count: deletedLicenseCount
+    });
+  }),
 
   http.get('/admin/users/:id/licenses', ({ params }) => {
     const items = licenses.filter((license) => license.owner_id === Number(params.id));
@@ -225,6 +287,55 @@ export const handlers = [
 
     appendAudit({ event: 'deleted', actor: 'ops-admin', target: removedUser.username, detail: 'User deleted from admin panel' });
     return HttpResponse.json({ success: true });
+  }),
+
+  http.get('/admin/apps', ({ request }) => {
+    const url = new URL(request.url);
+    const limit = Number(url.searchParams.get('limit') ?? 100);
+    const offset = Number(url.searchParams.get('offset') ?? 0);
+    return HttpResponse.json({ total: applications.length, items: applications.slice(offset, offset + limit) });
+  }),
+
+  http.post('/admin/apps', async ({ request }) => {
+    const body = (await request.json()) as { name: string; description?: string | null };
+    if (applications.some((application) => application.name === body.name)) {
+      return HttpResponse.json({ detail: 'Application name already exists' }, { status: 400 });
+    }
+    const created = {
+      id: Math.max(0, ...applications.map((application) => application.id)) + 1,
+      name: body.name,
+      description: body.description ?? null,
+      created_at: new Date().toISOString(),
+      updated_at: null
+    };
+    applications.push(created);
+    return HttpResponse.json(created, { status: 201 });
+  }),
+
+  http.get('/admin/apps/:id', ({ params }) => {
+    const application = applications.find((item) => item.id === Number(params.id));
+    if (!application) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
+    return HttpResponse.json(application);
+  }),
+
+  http.put('/admin/apps/:id', async ({ params, request }) => {
+    const application = applications.find((item) => item.id === Number(params.id));
+    if (!application) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
+    const body = (await request.json()) as { name?: string; description?: string | null };
+    if (body.name && applications.some((item) => item.id !== application.id && item.name === body.name)) {
+      return HttpResponse.json({ detail: 'Application name already exists' }, { status: 400 });
+    }
+    if (body.name !== undefined) application.name = body.name;
+    if (body.description !== undefined) application.description = body.description;
+    application.updated_at = new Date().toISOString();
+    return HttpResponse.json(application);
+  }),
+
+  http.delete('/admin/apps/:id', ({ params }) => {
+    const index = applications.findIndex((item) => item.id === Number(params.id));
+    if (index === -1) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
+    applications.splice(index, 1);
+    return HttpResponse.json({ deleted: true });
   }),
 
   http.get('/admin/audit', ({ request }) => {

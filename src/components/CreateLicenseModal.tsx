@@ -1,17 +1,33 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { Application } from '../types';
 
 interface CreateLicenseModalProps {
   open: boolean;
   onOpenChange: (value: boolean) => void;
-  onSubmit: (payload: { duration_days: number; username?: string }) => Promise<unknown>;
+  applications: Application[];
+  applicationsLoading?: boolean;
+  onSubmit: (payload: { duration_days: number; app_name: string; username?: string }) => Promise<unknown>;
 }
 
-export default function CreateLicenseModal({ open, onOpenChange, onSubmit }: CreateLicenseModalProps) {
+export default function CreateLicenseModal({
+  open,
+  onOpenChange,
+  applications,
+  applicationsLoading = false,
+  onSubmit
+}: CreateLicenseModalProps) {
   const [durationDays, setDurationDays] = useState('30');
+  const [appName, setAppName] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (appName && !applications.some((application) => application.name === appName)) {
+      setAppName('');
+    }
+  }, [appName, applications]);
 
   const handleSubmit = async () => {
     setError('');
@@ -20,15 +36,21 @@ export default function CreateLicenseModal({ open, onOpenChange, onSubmit }: Cre
       setError('Duration (days) must be greater than 0');
       return;
     }
+    if (!appName) {
+      setError('Vui lòng chọn ứng dụng');
+      return;
+    }
 
     setLoading(true);
     try {
       await onSubmit({
         duration_days: parsed,
+        app_name: appName,
         username: username.trim() || undefined
       });
       onOpenChange(false);
       setDurationDays('30');
+      setAppName('');
       setUsername('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create license');
@@ -48,6 +70,24 @@ export default function CreateLicenseModal({ open, onOpenChange, onSubmit }: Cre
           </Dialog.Description>
 
           <div className="mt-6 space-y-4">
+            <div>
+              <label className="label" htmlFor="license-application">Ứng dụng</label>
+              <select
+                id="license-application"
+                className="input"
+                value={appName}
+                onChange={(event) => setAppName(event.target.value)}
+                disabled={applicationsLoading || applications.length === 0}
+              >
+                <option value="">{applicationsLoading ? 'Đang tải...' : 'Chọn ứng dụng'}</option>
+                {applications.map((application) => (
+                  <option key={application.id} value={application.name}>{application.name}</option>
+                ))}
+              </select>
+              {!applicationsLoading && applications.length === 0 ? (
+                <p className="mt-2 text-sm text-amber-600">Chưa có ứng dụng, hãy tạo ứng dụng trước</p>
+              ) : null}
+            </div>
             <div>
               <label className="label" htmlFor="duration-days">
                 Duration (days)
@@ -80,7 +120,11 @@ export default function CreateLicenseModal({ open, onOpenChange, onSubmit }: Cre
             <button className="btn-secondary" onClick={() => onOpenChange(false)}>
               Cancel
             </button>
-            <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+            <button
+              className="btn-primary disabled:opacity-50"
+              onClick={handleSubmit}
+              disabled={loading || applicationsLoading || applications.length === 0 || !appName}
+            >
               {loading ? 'Creating...' : 'Create & Copy'}
             </button>
           </div>

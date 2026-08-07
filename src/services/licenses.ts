@@ -23,8 +23,11 @@ export async function getLicenseDetail(licenseKey: string) {
   return data;
 }
 
-export async function createLicense(payload: { duration_days: number; username?: string }) {
-  const { data } = await api.post<License>('/admin/licenses', { duration_days: payload.duration_days });
+export async function createLicense(payload: { duration_days: number; app_name: string; username?: string }) {
+  const { data } = await api.post<License>('/admin/licenses', {
+    duration_days: payload.duration_days,
+    app_name: payload.app_name
+  });
 
   if (payload.username) {
     await assignLicense(data.license_key, { username: payload.username });
@@ -45,5 +48,23 @@ export async function revokeLicense(licenseKey: string) {
 
 export async function renewLicense(licenseKey: string, payload: { extra_days: number }) {
   const { data } = await api.post<License>(`/admin/licenses/${licenseKey}/renew`, payload);
+  return data;
+}
+
+export interface BatchDeleteLicensesResponse {
+  requested: number;
+  deleted: number[];
+  not_found: number[];
+  skipped_assigned: Array<{
+    license_id: number;
+    owner_id: number;
+  }>;
+  failed: unknown[];
+}
+
+export async function deleteLicensesBatch(licenseIds: number[]) {
+  const { data } = await api.delete<BatchDeleteLicensesResponse>('/admin/licenses/batch', {
+    data: { license_ids: licenseIds }
+  });
   return data;
 }

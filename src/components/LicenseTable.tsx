@@ -6,14 +6,27 @@ import { cn } from '../utils/cn';
 
 interface LicenseTableProps {
   licenses: License[];
+  selectedIds?: Set<number>;
+  onToggle?: (licenseId: number) => void;
+  onToggleAll?: (checked: boolean) => void;
   onView: (item: License) => void;
   onAssign: (item: License) => void;
   onRevoke: (item: License) => void;
   onRenew: (item: License) => void;
 }
 
-export default function LicenseTable({ licenses, onView, onAssign, onRevoke, onRenew }: LicenseTableProps) {
+export default function LicenseTable({
+  licenses,
+  selectedIds = new Set<number>(),
+  onToggle,
+  onToggleAll,
+  onView,
+  onAssign,
+  onRevoke,
+  onRenew
+}: LicenseTableProps) {
   const rows = useMemo(() => licenses ?? [], [licenses]);
+  const allSelected = rows.length > 0 && rows.every((license) => selectedIds.has(license.id));
 
   return (
     <>
@@ -21,6 +34,17 @@ export default function LicenseTable({ licenses, onView, onAssign, onRevoke, onR
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50">
             <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+              {onToggle ? (
+                <th className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    aria-label="Select all licenses"
+                    checked={allSelected}
+                    onChange={(event) => onToggleAll?.(event.target.checked)}
+                  />
+                </th>
+              ) : null}
               <th className="px-4 py-3">License key</th>
               <th className="px-4 py-3">Owner</th>
               <th className="px-4 py-3">HWID</th>
@@ -36,6 +60,17 @@ export default function LicenseTable({ licenses, onView, onAssign, onRevoke, onR
               const status = getLicenseStatus(license.expiry_date, license.is_active);
               return (
                 <tr key={license.license_key} className="text-slate-700">
+                  {onToggle ? (
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        aria-label={`Select license ${license.license_key}`}
+                        checked={selectedIds.has(license.id)}
+                        onChange={() => onToggle(license.id)}
+                      />
+                    </td>
+                  ) : null}
                   <td className="px-4 py-3 font-mono text-xs text-slate-900">{license.license_key}</td>
                   <td className="px-4 py-3">{license.owner_username ?? '-'}</td>
                   <td className="px-4 py-3">{license.hwid ?? '-'}</td>
@@ -70,10 +105,32 @@ export default function LicenseTable({ licenses, onView, onAssign, onRevoke, onR
       </div>
 
       <div className="space-y-3 md:hidden">
+        {onToggle && rows.length > 0 ? (
+          <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              checked={allSelected}
+              onChange={(event) => onToggleAll?.(event.target.checked)}
+            />
+            Chọn tất cả license trên trang
+          </label>
+        ) : null}
         {rows.map((license) => (
           <article key={license.license_key} className="card !p-4">
             <div className="mb-2 flex items-start justify-between gap-2">
-              <p className="font-mono text-xs text-slate-900">{license.license_key}</p>
+              <div className="flex items-start gap-3">
+                {onToggle ? (
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    aria-label={`Select license ${license.license_key}`}
+                    checked={selectedIds.has(license.id)}
+                    onChange={() => onToggle(license.id)}
+                  />
+                ) : null}
+                <p className="font-mono text-xs text-slate-900">{license.license_key}</p>
+              </div>
               <LicenseRowActions
                 onView={() => onView(license)}
                 onAssign={() => onAssign(license)}

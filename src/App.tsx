@@ -5,6 +5,7 @@ import Licenses from './pages/Licenses';
 import Users from './pages/Users';
 import Audit from './pages/Audit';
 import Settings from './pages/Settings';
+import Applications from './pages/Applications';
 import LicenseDetailPage from './pages/LicenseDetail';
 import MyLicenses from './pages/MyLicenses';
 import AppShell from './components/AppShell';
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/licenses" element={<Licenses />} />
           <Route path="/licenses/:key" element={<LicenseDetailPage />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/applications" element={<Applications />} />
           <Route path="/audit" element={<Audit />} />
           <Route path="/settings" element={<Settings />} />
         </Route>

@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '../utils/cn';
 
-type ToastType = 'success' | 'error' | 'info';
+type ToastType = 'success' | 'warning' | 'error' | 'info';
 
 interface ToastItem {
   id: string;
@@ -43,6 +43,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             className={cn(
               'rounded-xl border p-4 shadow-card backdrop-blur-sm transition',
               toast.type === 'success' && 'border-emerald-200 bg-emerald-50',
+              toast.type === 'warning' && 'border-amber-200 bg-amber-50',
               toast.type === 'error' && 'border-rose-200 bg-rose-50',
               toast.type === 'info' && 'border-slate-200 bg-white'
             )}

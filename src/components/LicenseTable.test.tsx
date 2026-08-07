@@ -4,6 +4,7 @@ import LicenseTable from './LicenseTable';
 
 const sample = [
   {
+    id: 10,
     license_key: 'ABC-123',
     owner_id: 1,
     owner_username: 'alice',
@@ -30,7 +31,7 @@ describe('LicenseTable', () => {
     expect(screen.getByText('License key')).toBeInTheDocument();
     expect(screen.getByText('Owner')).toBeInTheDocument();
     expect(screen.getByText('HWID')).toBeInTheDocument();
-    expect(screen.getByText('ABC-123')).toBeInTheDocument();
+    expect(screen.getAllByText('ABC-123')).toHaveLength(2);
     expect(screen.getByText('alice')).toBeInTheDocument();
   });
 
@@ -51,5 +52,30 @@ describe('LicenseTable', () => {
     await user.click(screen.getAllByText('Assign')[0]);
 
     expect(onAssign).toHaveBeenCalledTimes(1);
+  });
+
+  it('selects a license and all visible licenses', async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+    const onToggleAll = vi.fn();
+
+    render(
+      <LicenseTable
+        licenses={sample}
+        selectedIds={new Set()}
+        onToggle={onToggle}
+        onToggleAll={onToggleAll}
+        onView={vi.fn()}
+        onAssign={vi.fn()}
+        onRevoke={vi.fn()}
+        onRenew={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getAllByLabelText('Select license ABC-123')[0]);
+    await user.click(screen.getByLabelText('Select all licenses'));
+
+    expect(onToggle).toHaveBeenCalledWith(10);
+    expect(onToggleAll).toHaveBeenCalledWith(true);
   });
 });

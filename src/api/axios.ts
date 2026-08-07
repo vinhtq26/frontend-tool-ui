@@ -2,7 +2,7 @@ import axios from 'axios';
 import { authStorage } from '../contexts/AuthContext';
 
 const useMsw = import.meta.env.VITE_USE_MSW === 'true';
-const backendBaseURL = import.meta.env.VITE_API_BASE_URL?.trim() || 'https://backend-tool-manager.onrender.com';
+const backendBaseURL = import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost:8000';
 const resolvedBaseURL = useMsw ? '/' : backendBaseURL;
 
 console.log('[API] Connecting to host:', resolvedBaseURL);

@@ -1,7 +1,24 @@
 import { addDays, subDays } from 'date-fns';
-import type { AuditEvent, License, User } from '../types';
+import type { Application, AuditEvent, License, User } from '../types';
 
 const now = new Date();
+
+export const applications: Application[] = [
+  {
+    id: 1,
+    name: 'Tool Reup',
+    description: 'Tool reup YouTube',
+    created_at: now.toISOString(),
+    updated_at: null
+  },
+  {
+    id: 2,
+    name: 'Admin Console',
+    description: 'LicenseOps administration',
+    created_at: now.toISOString(),
+    updated_at: null
+  }
+];
 
 export const users: User[] = [
   { id: 1, username: 'alice', email: 'alice@acme.local', app_name: 'Tool Reup', role: 'user', is_active: true, created_at: now.toISOString() },
@@ -11,6 +28,7 @@ export const users: User[] = [
 
 export let licenses: License[] = [
   {
+    id: 10,
     license_key: '9kS2f3_ABCxyzQ-001',
     license_token: 'lic_tok_alice_001x8Kp2',
     owner_id: 1,
@@ -23,6 +41,7 @@ export let licenses: License[] = [
     created_at: subDays(now, 2).toISOString()
   },
   {
+    id: 11,
     license_key: '9kS2f3_ABCxyzQ-002',
     license_token: 'lic_tok_pool_002mN4z7',
     owner_id: null,
@@ -35,6 +54,7 @@ export let licenses: License[] = [
     created_at: subDays(now, 1).toISOString()
   },
   {
+    id: 12,
     license_key: '9kS2f3_ABCxyzQ-003',
     license_token: 'lic_tok_bob_003qR6t1',
     owner_id: 2,

@@ -5,6 +5,7 @@ import TrendChart from '../components/TrendChart';
 import { createLicense, listLicenses } from '../services/licenses';
 import CreateLicenseModal from '../components/CreateLicenseModal';
 import { useToast } from '../components/Toasts';
+import { listApplications } from '../services/applications';
 
 export default function Dashboard() {
   const [openCreate, setOpenCreate] = useState(false);
@@ -14,6 +15,12 @@ export default function Dashboard() {
   const { data } = useQuery({
     queryKey: ['licenses', 'dashboard'],
     queryFn: () => listLicenses({ limit: 200, offset: 0 })
+  });
+
+  const applicationsQuery = useQuery({
+    queryKey: ['applications'],
+    queryFn: () => listApplications({ limit: 100, offset: 0 }),
+    enabled: openCreate
   });
 
   const createMutation = useMutation({
@@ -71,6 +78,8 @@ export default function Dashboard() {
       <CreateLicenseModal
         open={openCreate}
         onOpenChange={setOpenCreate}
+        applications={applicationsQuery.data?.items ?? []}
+        applicationsLoading={applicationsQuery.isLoading}
         onSubmit={(payload) => createMutation.mutateAsync(payload)}
       />
     </section>

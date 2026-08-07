@@ -32,3 +32,18 @@ export async function deleteUser(userId: number) {
   const { data } = await api.delete<{ success: boolean }>(`/admin/users/${userId}`);
   return data;
 }
+
+export interface BatchDeleteUsersResponse {
+  requested: number;
+  deleted: number[];
+  not_found: number[];
+  failed: unknown[];
+  deleted_license_count: number;
+}
+
+export async function deleteUsersBatch(userIds: number[]) {
+  const { data } = await api.delete<BatchDeleteUsersResponse>('/admin/users/batch', {
+    data: { user_ids: userIds }
+  });
+  return data;
+}

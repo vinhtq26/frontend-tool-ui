@@ -14,7 +14,16 @@ export interface User {
   created_at: string;
 }
 
+export interface Application {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
 export interface License {
+  id: number;
   license_key: string;
   license_token?: string | null;
   token?: string | null;

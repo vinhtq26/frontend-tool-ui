@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import LicenseTable from '../components/LicenseTable';
 import CreateLicenseModal from '../components/CreateLicenseModal';
@@ -7,10 +8,13 @@ import AssignUserModal from '../components/AssignUserModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ErrorModal from '../components/ErrorModal';
 import LicenseDetailDrawer from '../components/LicenseDetailDrawer';
-import { assignLicense, createLicense, listLicenses, renewLicense, revokeLicense } from '../services/licenses';
+import { assignLicense, createLicense, deleteLicensesBatch, listLicenses, renewLicense, revokeLicense } from '../services/licenses';
 import type { License } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
 import { useToast } from '../components/Toasts';
+import { useAuth } from '../contexts/AuthContext';
+import { formatBatchItems } from '../utils/batchDelete';
+import { listApplications } from '../services/applications';
 
 const pageSizes = [5, 10, 20, 50];
 
@@ -28,11 +32,14 @@ export default function Licenses() {
   const [openConfirm, setOpenConfirm] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
   const [selected, setSelected] = useState<License | null>(null);
+  const [selectedLicenseIds, setSelectedLicenseIds] = useState<Set<number>>(() => new Set());
+  const [openBatchDelete, setOpenBatchDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(search);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const { push } = useToast();
 
   const query = useQuery({
@@ -47,6 +54,12 @@ export default function Licenses() {
         expiry_from: expiryFrom || undefined,
         expiry_to: expiryTo || undefined
       })
+  });
+
+  const applicationsQuery = useQuery({
+    queryKey: ['applications'],
+    queryFn: () => listApplications({ limit: 100, offset: 0 }),
+    enabled: openCreate
   });
 
   const createMutation = useMutation({
@@ -102,6 +115,50 @@ export default function Licenses() {
     },
     onError: (err: Error) => setError(err.message)
   });
+
+  const batchDeleteMutation = useMutation({
+    mutationFn: deleteLicensesBatch,
+    onSuccess: (result) => {
+      setSelectedLicenseIds(new Set());
+      const details = [
+        result.skipped_assigned.length ? `Bỏ qua ${result.skipped_assigned.length} license đang gắn user.` : '',
+        result.not_found.length ? `Không tìm thấy: ${result.not_found.join(', ')}.` : '',
+        result.failed.length ? `Lỗi khi xoá: ${formatBatchItems(result.failed)}.` : ''
+      ].filter(Boolean).join(' ');
+
+      push({
+        type: result.skipped_assigned.length || result.not_found.length || result.failed.length ? 'warning' : 'success',
+        title: `Đã xoá ${result.deleted.length} license.`,
+        message: details || undefined
+      });
+    },
+    onError: (error) => {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        signOut();
+        navigate('/login', { replace: true });
+        return;
+      }
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        push({ type: 'error', title: 'Bạn không có quyền xoá license.' });
+        return;
+      }
+      push({
+        type: 'error',
+        title: 'Không thể xoá các license đã chọn.',
+        message: error instanceof Error ? error.message : undefined
+      });
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['licenses'] })
+  });
+
+  const toggleLicense = (licenseId: number) => {
+    setSelectedLicenseIds((current) => {
+      const next = new Set(current);
+      if (next.has(licenseId)) next.delete(licenseId);
+      else next.add(licenseId);
+      return next;
+    });
+  };
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil((query.data?.total ?? 0) / pageSize)), [query.data, pageSize]);
 
@@ -175,12 +232,28 @@ export default function Licenses() {
         <button className="btn-primary" onClick={() => setOpenCreate(true)}>
           Create License
         </button>
+        <button
+          className="btn-primary bg-rose-600 hover:bg-rose-500 disabled:opacity-50"
+          disabled={selectedLicenseIds.size === 0 || batchDeleteMutation.isPending}
+          onClick={() => setOpenBatchDelete(true)}
+        >
+          Xoá đã chọn{selectedLicenseIds.size ? ` (${selectedLicenseIds.size})` : ''}
+        </button>
       </div>
 
       {query.isLoading ? <div className="card">Loading licenses...</div> : null}
       {query.data ? (
         <LicenseTable
           licenses={query.data.items}
+          selectedIds={selectedLicenseIds}
+          onToggle={toggleLicense}
+          onToggleAll={(checked) => {
+            setSelectedLicenseIds((current) => {
+              const next = new Set(current);
+              query.data.items.forEach((license) => checked ? next.add(license.id) : next.delete(license.id));
+              return next;
+            });
+          }}
           onView={(item) => {
             setSelected(item);
             setOpenDetail(true);
@@ -239,7 +312,13 @@ export default function Licenses() {
         </div>
       </div>
 
-      <CreateLicenseModal open={openCreate} onOpenChange={setOpenCreate} onSubmit={(payload) => createMutation.mutateAsync(payload)} />
+      <CreateLicenseModal
+        open={openCreate}
+        onOpenChange={setOpenCreate}
+        applications={applicationsQuery.data?.items ?? []}
+        applicationsLoading={applicationsQuery.isLoading}
+        onSubmit={(payload) => createMutation.mutateAsync(payload)}
+      />
       <AssignUserModal
         open={openAssign}
         onOpenChange={setOpenAssign}
@@ -252,6 +331,14 @@ export default function Licenses() {
         description="Are you sure you want to revoke this license? This action cannot be undone."
         confirmLabel="Revoke"
         onConfirm={() => selected && revokeMutation.mutate(selected.license_key)}
+      />
+      <ConfirmDialog
+        open={openBatchDelete}
+        onOpenChange={setOpenBatchDelete}
+        title="Xoá các license đã chọn"
+        description={`Bạn sắp yêu cầu xoá ${selectedLicenseIds.size} license. License đã gắn user sẽ không bị xoá và sẽ được backend tự động bỏ qua.`}
+        confirmLabel="Xoá license"
+        onConfirm={() => batchDeleteMutation.mutate(Array.from(selectedLicenseIds))}
       />
       <LicenseDetailDrawer
         open={openDetail}
