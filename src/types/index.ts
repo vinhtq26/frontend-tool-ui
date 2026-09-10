@@ -37,6 +37,44 @@ export interface License {
   created_at?: string;
 }
 
+export interface KeyAuthRequest {
+  license_key: string;
+  hwid: string;
+  app_name: string;
+  machine_name?: string;
+  device_fingerprint?: string;
+}
+
+export interface KeyAuthResponse {
+  valid: boolean;
+  message: string;
+  license_key: string;
+  license_token: string;
+  expiry_date: string;
+  server_time: string;
+}
+
+export interface LogFraudRequest {
+  license_key: string;
+  hwid: string;
+  app_name: string;
+  reason: string;
+  machine_name?: string;
+  device_fingerprint?: string;
+}
+
+export interface FraudLog {
+  id: number;
+  license_key: string;
+  hwid: string;
+  app_name: string;
+  reason: string;
+  machine_name?: string | null;
+  device_fingerprint?: string | null;
+  audit_event_id: number;
+  timestamp: string;
+}
+
 export interface PaginatedResponse<T> {
   total: number;
   items: T[];

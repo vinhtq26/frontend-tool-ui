@@ -24,7 +24,7 @@ export async function getLicenseDetail(licenseKey: string) {
 }
 
 export async function createLicense(payload: { duration_days: number; app_name: string; username?: string }) {
-  const { data } = await api.post<License>('/admin/licenses', {
+  const { data } = await api.post<License>('/admin/keys', {
     duration_days: payload.duration_days,
     app_name: payload.app_name
   });

@@ -8,6 +8,7 @@ import Settings from './pages/Settings';
 import Applications from './pages/Applications';
 import LicenseDetailPage from './pages/LicenseDetail';
 import MyLicenses from './pages/MyLicenses';
+import KeyAuth from './pages/KeyAuth';
 import AppShell from './components/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/licenses" element={<Licenses />} />
           <Route path="/licenses/:key" element={<LicenseDetailPage />} />
+          <Route path="/key-auth" element={<KeyAuth />} />
           <Route path="/users" element={<Users />} />
           <Route path="/applications" element={<Applications />} />
           <Route path="/audit" element={<Audit />} />

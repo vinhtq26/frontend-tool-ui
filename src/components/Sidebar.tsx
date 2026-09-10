@@ -6,13 +6,15 @@ import {
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
   Squares2X2Icon,
-  XMarkIcon
+  XMarkIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../utils/cn';
 
 const menus = [
   { name: 'Dashboard', to: '/dashboard', icon: HomeIcon },
   { name: 'Licenses', to: '/licenses', icon: KeyIcon },
+  { name: 'Key Auth', to: '/key-auth', icon: ShieldCheckIcon },
   { name: 'Users', to: '/users', icon: UsersIcon },
   { name: 'Ứng dụng', to: '/applications', icon: Squares2X2Icon },
   { name: 'Audit', to: '/audit', icon: ClipboardDocumentListIcon },
