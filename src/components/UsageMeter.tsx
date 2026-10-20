@@ -5,9 +5,10 @@ import { cn } from '../utils/cn';
 interface UsageMeterProps {
   usage?: LicenseUsage | null;
   compact?: boolean;
+  custom?: boolean;
 }
 
-export default function UsageMeter({ usage, compact = false }: UsageMeterProps) {
+export default function UsageMeter({ usage, compact = false, custom = false }: UsageMeterProps) {
   if (!usage) return <span className="text-slate-400">-</span>;
 
   const percent = usage.limit > 0 ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0;
@@ -18,6 +19,7 @@ export default function UsageMeter({ usage, compact = false }: UsageMeterProps) 
       <div className="flex items-center justify-between gap-2 text-xs">
         <span className={cn('font-semibold', exhausted ? 'text-rose-600' : 'text-slate-700')}>
           {usage.used}/{usage.limit}
+          {custom ? <span className="ml-1 font-normal text-indigo-600" title="Giới hạn riêng cho license này">· riêng</span> : null}
         </span>
         <span
           className={cn(
@@ -37,6 +39,7 @@ export default function UsageMeter({ usage, compact = false }: UsageMeterProps) 
       {!compact ? (
         <p className="text-xs text-slate-500">
           Đã tải {usage.used}/{usage.limit} video tháng {usage.period} · còn {usage.remaining}
+          {custom ? ' · giới hạn riêng' : ' · theo cấu hình chung'}
           {usage.plan_expiry ? ` · Pro đến ${formatDate(usage.plan_expiry)}` : ''}
         </p>
       ) : null}

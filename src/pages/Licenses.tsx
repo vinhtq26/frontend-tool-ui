@@ -8,7 +8,8 @@ import AssignUserModal from '../components/AssignUserModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ErrorModal from '../components/ErrorModal';
 import LicenseDetailDrawer from '../components/LicenseDetailDrawer';
-import { assignLicense, createLicense, deleteLicensesBatch, listLicenses, renewLicense, revokeLicense } from '../services/licenses';
+import QuotaLimitModal from '../components/QuotaLimitModal';
+import { assignLicense, createLicense, deleteLicensesBatch, listLicenses, renewLicense, revokeLicense, setLicenseQuotaLimit } from '../services/licenses';
 import type { License } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
 import { useToast } from '../components/Toasts';
@@ -31,6 +32,7 @@ export default function Licenses() {
   const [openAssign, setOpenAssign] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
+  const [openQuota, setOpenQuota] = useState(false);
   const [selected, setSelected] = useState<License | null>(null);
   const [selectedLicenseIds, setSelectedLicenseIds] = useState<Set<number>>(() => new Set());
   const [openBatchDelete, setOpenBatchDelete] = useState(false);
@@ -112,6 +114,21 @@ export default function Licenses() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['licenses'] });
       push({ type: 'success', title: 'License renewed' });
+    },
+    onError: (err: Error) => setError(err.message)
+  });
+
+  const quotaMutation = useMutation({
+    mutationFn: ({ key, limit }: { key: string; limit: number | null }) => setLicenseQuotaLimit(key, limit),
+    onSuccess: (updated) => {
+      setSelected((current) => (current?.license_key === updated.license_key ? updated : current));
+      queryClient.invalidateQueries({ queryKey: ['licenses'] });
+      queryClient.invalidateQueries({ queryKey: ['license-detail', updated.license_key] });
+      push({
+        type: 'success',
+        title: 'Đã lưu giới hạn tải',
+        message: updated.custom_monthly_limit == null ? 'License dùng cấu hình chung.' : `Giới hạn riêng: ${updated.custom_monthly_limit} video/tháng.`
+      });
     },
     onError: (err: Error) => setError(err.message)
   });
@@ -266,6 +283,10 @@ export default function Licenses() {
             setSelected(item);
             setOpenConfirm(true);
           }}
+          onEditQuota={(item) => {
+            setSelected(item);
+            setOpenQuota(true);
+          }}
           onRenew={(item) => {
             const input = window.prompt('Extra days', '30');
             const parsed = Number(input);
@@ -358,7 +379,18 @@ export default function Licenses() {
           setOpenDetail(false);
           setOpenConfirm(true);
         }}
+        onEditQuota={() => {
+          setOpenDetail(false);
+          setOpenQuota(true);
+        }}
         onResend={() => push({ type: 'info', title: 'Email queued', message: 'Mock endpoint: /admin/licenses/{key}/resend' })}
+      />
+
+      <QuotaLimitModal
+        open={openQuota}
+        onOpenChange={setOpenQuota}
+        license={selected}
+        onSubmit={(limit) => quotaMutation.mutateAsync({ key: selected?.license_key ?? '', limit })}
       />
 
       <ErrorModal open={Boolean(error)} title="Server error" message={error ?? ''} onClose={() => setError(null)} />

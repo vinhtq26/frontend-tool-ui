@@ -78,7 +78,7 @@ export default function QuotaSettingsCard() {
         <form className="flex-1 space-y-4" onSubmit={handleSubmit}>
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Giới hạn tải video</h2>
-            <p className="mt-1 text-sm text-slate-500">Số video mỗi license được tải trong một tháng. Lưu xong áp dụng ngay, không cần restart server.</p>
+            <p className="mt-1 text-sm text-slate-500">Số video mỗi license được tải trong một tháng. Lưu xong áp dụng ngay, không cần restart server. License có giới hạn riêng không bị ảnh hưởng.</p>
           </div>
 
           {query.isLoading ? <p className="text-sm text-slate-400">Loading…</p> : null}

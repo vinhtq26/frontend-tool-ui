@@ -12,6 +12,7 @@ interface LicenseDetailDrawerProps {
   onRevoke: () => void;
   onResend: () => void;
   onAssign: () => void;
+  onEditQuota: () => void;
 }
 
 export default function LicenseDetailDrawer({
@@ -21,7 +22,8 @@ export default function LicenseDetailDrawer({
   onRenew,
   onRevoke,
   onResend,
-  onAssign
+  onAssign,
+  onEditQuota
 }: LicenseDetailDrawerProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -61,7 +63,7 @@ export default function LicenseDetailDrawer({
               </div>
               <div className="card !p-4">
                 <p className="mb-2 text-xs text-slate-500">Lượt tải video tháng này</p>
-                <UsageMeter usage={license.usage} />
+                <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} />
               </div>
               <div className="card">
                 <p className="mb-3 text-sm font-semibold text-slate-900">Actions</p>
@@ -74,6 +76,9 @@ export default function LicenseDetailDrawer({
                   </button>
                   <button className="btn-secondary" onClick={onRenew}>
                     Renew
+                  </button>
+                  <button className="btn-secondary" onClick={onEditQuota}>
+                    Giới hạn tải
                   </button>
                   <button
                     className="btn-primary bg-rose-600 hover:bg-rose-500 disabled:opacity-50"

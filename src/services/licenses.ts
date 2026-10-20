@@ -46,6 +46,11 @@ export async function revokeLicense(licenseKey: string) {
   return data;
 }
 
+export async function setLicenseQuotaLimit(licenseKey: string, monthlyLimit: number | null) {
+  const { data } = await api.put<License>(`/admin/licenses/${licenseKey}/quota-limit`, { monthly_limit: monthlyLimit });
+  return data;
+}
+
 export async function renewLicense(licenseKey: string, payload: { extra_days: number }) {
   const { data } = await api.post<License>(`/admin/licenses/${licenseKey}/renew`, payload);
   return data;
