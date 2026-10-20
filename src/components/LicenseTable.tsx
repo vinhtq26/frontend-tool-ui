@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { PencilSquareIcon } from '@heroicons/react/24/outline';
 import type { License } from '../types';
 import LicenseRowActions from './LicenseRowActions';
 import UsageMeter from './UsageMeter';
@@ -33,7 +34,7 @@ export default function LicenseTable({
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card md:block">
+      <div className="hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-card md:block">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50">
             <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
@@ -56,7 +57,7 @@ export default function LicenseTable({
               <th className="px-4 py-3">Duration (days)</th>
               <th className="px-4 py-3">Expiry date</th>
               <th className="px-4 py-3">Last check</th>
-              <th className="px-4 py-3" />
+              <th className="sticky right-0 bg-slate-50 px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
@@ -77,7 +78,11 @@ export default function LicenseTable({
                   ) : null}
                   <td className="px-4 py-3 font-mono text-xs text-slate-900">{license.license_key}</td>
                   <td className="px-4 py-3">{license.owner_username ?? '-'}</td>
-                  <td className="px-4 py-3">{license.hwid ?? '-'}</td>
+                  <td className="px-4 py-3">
+                    <span className="block max-w-36 truncate font-mono text-xs" title={license.hwid ?? undefined}>
+                      {license.hwid ?? '-'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className={cn(
@@ -91,12 +96,25 @@ export default function LicenseTable({
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} compact />
+                    <div className="flex items-center gap-2">
+                      <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} compact />
+                      {onEditQuota ? (
+                        <button
+                          type="button"
+                          className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
+                          title="Sửa giới hạn tải"
+                          aria-label={`Sửa giới hạn tải ${license.license_key}`}
+                          onClick={() => onEditQuota(license)}
+                        >
+                          <PencilSquareIcon className="h-4 w-4" />
+                        </button>
+                      ) : null}
+                    </div>
                   </td>
                   <td className="px-4 py-3">{license.duration_days}</td>
                   <td className="px-4 py-3">{formatDate(license.expiry_date)}</td>
                   <td className="px-4 py-3">{formatDate(license.last_check)}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="sticky right-0 bg-white px-4 py-3 text-right">
                     <LicenseRowActions
                       onView={() => onView(license)}
                       onAssign={() => onAssign(license)}
@@ -151,7 +169,7 @@ export default function LicenseTable({
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
               <span>Owner: {license.owner_username ?? '-'}</span>
-              <span>HWID: {license.hwid ?? '-'}</span>
+              <span className="truncate" title={license.hwid ?? undefined}>HWID: {license.hwid ?? '-'}</span>
               <span>Duration: {license.duration_days} days</span>
               <span>Expiry: {formatDate(license.expiry_date)}</span>
               <div className="col-span-2">
