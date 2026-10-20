@@ -10,6 +10,7 @@ import {
 import { authenticateKey, logFraud } from '../services/keyAuth';
 import type { FraudLog, KeyAuthRequest, KeyAuthResponse, LogFraudRequest } from '../types';
 import { useToast } from '../components/Toasts';
+import ClientUsagePanel from '../components/ClientUsagePanel';
 
 const defaultAppName = 'tool_reup_youtube_master';
 
@@ -334,6 +335,8 @@ export default function KeyAuth() {
 
         <JsonResult title="Fraud log response" data={fraudResult} />
       </div>
+
+      <ClientUsagePanel licenseToken={authResult?.license_token} machineId={authResult ? authForm.hwid : undefined} />
     </section>
   );
 }

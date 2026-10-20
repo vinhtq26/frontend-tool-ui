@@ -2,6 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { License } from '../types';
 import { formatDate } from '../utils/date';
+import UsageMeter from './UsageMeter';
 
 interface LicenseDetailDrawerProps {
   open: boolean;
@@ -58,6 +59,10 @@ export default function LicenseDetailDrawer({
                   <p className="mt-1 font-medium text-slate-900">{formatDate(license.last_check)}</p>
                 </div>
               </div>
+              <div className="card !p-4">
+                <p className="mb-2 text-xs text-slate-500">Lượt tải video tháng này</p>
+                <UsageMeter usage={license.usage} />
+              </div>
               <div className="card">
                 <p className="mb-3 text-sm font-semibold text-slate-900">Actions</p>
                 <div className="flex flex-wrap gap-2">
@@ -70,8 +75,12 @@ export default function LicenseDetailDrawer({
                   <button className="btn-secondary" onClick={onRenew}>
                     Renew
                   </button>
-                  <button className="btn-primary bg-rose-600 hover:bg-rose-500" onClick={onRevoke}>
-                    Revoke
+                  <button
+                    className="btn-primary bg-rose-600 hover:bg-rose-500 disabled:opacity-50"
+                    disabled={!license.is_active}
+                    onClick={onRevoke}
+                  >
+                    {license.is_active ? 'Khóa key' : 'Đã khóa'}
                   </button>
                 </div>
               </div>

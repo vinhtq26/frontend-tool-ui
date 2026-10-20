@@ -102,7 +102,7 @@ export default function Licenses() {
     mutationFn: revokeLicense,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['licenses'] });
-      push({ type: 'success', title: 'License revoked' });
+      push({ type: 'success', title: 'Đã khóa key', message: 'License không thể đăng nhập hay tải video nữa.' });
     },
     onError: (err: Error) => setError(err.message)
   });
@@ -327,9 +327,9 @@ export default function Licenses() {
       <ConfirmDialog
         open={openConfirm}
         onOpenChange={setOpenConfirm}
-        title="Revoke license"
-        description="Are you sure you want to revoke this license? This action cannot be undone."
-        confirmLabel="Revoke"
+        title="Khóa key"
+        description={`Khóa key ${selected?.license_key ?? ''}? License sẽ bị chặn đăng nhập và tải video ngay lập tức. Hiện chưa thể mở khóa lại từng key riêng lẻ.`}
+        confirmLabel="Khóa key"
         onConfirm={() => selected && revokeMutation.mutate(selected.license_key)}
       />
       <ConfirmDialog
