@@ -1,5 +1,5 @@
 import api from '../api/axios';
-import type { License, PaginatedResponse } from '../types';
+import type { License, PaginatedResponse, QuotaLimitPayload } from '../types';
 
 export interface LicenseFilters {
   status?: string;
@@ -46,8 +46,8 @@ export async function revokeLicense(licenseKey: string) {
   return data;
 }
 
-export async function setLicenseQuotaLimit(licenseKey: string, monthlyLimit: number | null) {
-  const { data } = await api.put<License>(`/admin/licenses/${licenseKey}/quota-limit`, { monthly_limit: monthlyLimit });
+export async function setLicenseQuotaLimit(licenseKey: string, payload: QuotaLimitPayload) {
+  const { data } = await api.put<License>(`/admin/licenses/${licenseKey}/quota-limit`, payload);
   return data;
 }
 

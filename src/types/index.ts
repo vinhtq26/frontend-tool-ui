@@ -37,6 +37,7 @@ export interface License {
   created_at?: string;
   plan_expiry?: string | null;
   custom_monthly_limit?: number | null;
+  custom_daily_limit?: number | null;
   usage?: LicenseUsage | null;
 }
 
@@ -49,6 +50,15 @@ export interface LicenseUsage {
   used: number;
   limit: number;
   remaining: number;
+  daily_period?: string;
+  daily_used?: number;
+  daily_limit?: number;
+  daily_remaining?: number;
+}
+
+export interface QuotaLimitPayload {
+  monthly_limit?: number | null;
+  daily_limit?: number | null;
 }
 
 export interface ClientCredentials {
@@ -73,6 +83,7 @@ export interface ResolveVideoResponse {
 
 export interface QuotaExceededDetail extends LicenseUsage {
   code: 'quota_exceeded';
+  limit_type?: 'daily' | 'monthly';
   message: string;
 }
 
@@ -143,4 +154,6 @@ export interface TrendItem {
 export interface QuotaSettings {
   free_monthly_downloads: number;
   pro_monthly_downloads: number;
+  free_daily_downloads: number;
+  pro_daily_downloads: number;
 }

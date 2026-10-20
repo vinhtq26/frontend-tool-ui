@@ -399,10 +399,11 @@ export const handlers = [
   }),
 
   http.put('/admin/licenses/:licenseKey/quota-limit', async ({ params, request }) => {
-    const body = (await request.json()) as { monthly_limit: number | null };
+    const body = (await request.json()) as { monthly_limit?: number | null; daily_limit?: number | null };
     const item = licenses.find((license) => license.license_key === params.licenseKey);
     if (!item) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
-    item.custom_monthly_limit = body.monthly_limit;
+    if ('monthly_limit' in body) item.custom_monthly_limit = body.monthly_limit;
+    if ('daily_limit' in body) item.custom_daily_limit = body.daily_limit;
     item.usage = buildUsage(item);
     return HttpResponse.json(item);
   }),
@@ -425,12 +426,16 @@ export const handlers = [
     const videoId = body.video_id ?? body.vid;
     if (!videoId) return HttpResponse.json({ detail: 'video_id is required' }, { status: 400 });
     const usage = buildUsage(license);
-    if (usage.remaining <= 0) {
+    const dailyBlocked = (usage.daily_remaining ?? 1) <= 0;
+    if (usage.remaining <= 0 || dailyBlocked) {
       return HttpResponse.json(
         {
           detail: {
             code: 'quota_exceeded',
-            message: `Monthly download limit reached (${usage.used}/${usage.limit} episodes)`,
+            limit_type: dailyBlocked ? 'daily' : 'monthly',
+            message: dailyBlocked
+              ? `Download limit reached (${usage.daily_used}/${usage.daily_limit} episodes today)`
+              : `Monthly download limit reached (${usage.used}/${usage.limit} episodes)`,
             ...usage
           }
         },

@@ -8,7 +8,9 @@ import { useToast } from './Toasts';
 
 const fields: Array<{ key: keyof QuotaSettings; label: string }> = [
   { key: 'free_monthly_downloads', label: 'Gói Free (video/tháng)' },
-  { key: 'pro_monthly_downloads', label: 'Gói Pro (video/tháng)' }
+  { key: 'pro_monthly_downloads', label: 'Gói Pro (video/tháng)' },
+  { key: 'free_daily_downloads', label: 'Gói Free (video/ngày)' },
+  { key: 'pro_daily_downloads', label: 'Gói Pro (video/ngày)' }
 ];
 
 function getErrorMessage(error: unknown) {
@@ -25,7 +27,9 @@ export default function QuotaSettingsCard() {
   const { push } = useToast();
   const [form, setForm] = useState<Record<keyof QuotaSettings, string>>({
     free_monthly_downloads: '',
-    pro_monthly_downloads: ''
+    pro_monthly_downloads: '',
+    free_daily_downloads: '',
+    pro_daily_downloads: ''
   });
   const [error, setError] = useState('');
 
@@ -34,8 +38,10 @@ export default function QuotaSettingsCard() {
   useEffect(() => {
     if (!query.data) return;
     setForm({
-      free_monthly_downloads: String(query.data.free_monthly_downloads),
-      pro_monthly_downloads: String(query.data.pro_monthly_downloads)
+      free_monthly_downloads: String(query.data.free_monthly_downloads ?? ''),
+      pro_monthly_downloads: String(query.data.pro_monthly_downloads ?? ''),
+      free_daily_downloads: String(query.data.free_daily_downloads ?? ''),
+      pro_daily_downloads: String(query.data.pro_daily_downloads ?? '')
     });
   }, [query.data]);
 
@@ -78,7 +84,7 @@ export default function QuotaSettingsCard() {
         <form className="flex-1 space-y-4" onSubmit={handleSubmit}>
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Giới hạn tải video</h2>
-            <p className="mt-1 text-sm text-slate-500">Số video mỗi license được tải trong một tháng. Lưu xong áp dụng ngay, không cần restart server. License có giới hạn riêng không bị ảnh hưởng.</p>
+            <p className="mt-1 text-sm text-slate-500">Số video mỗi license được tải mỗi tháng và mỗi ngày. Lưu xong áp dụng ngay, không cần restart server. License có giới hạn riêng không bị ảnh hưởng.</p>
           </div>
 
           {query.isLoading ? <p className="text-sm text-slate-400">Loading…</p> : null}

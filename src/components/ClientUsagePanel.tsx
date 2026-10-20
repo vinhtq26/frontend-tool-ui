@@ -134,7 +134,7 @@ export default function ClientUsagePanel({ licenseToken = '', machineId = '' }: 
           <button
             type="button"
             className="btn-primary gap-2 disabled:opacity-50"
-            disabled={resolveMutation.isPending || (usage ? usage.remaining <= 0 : false)}
+            disabled={resolveMutation.isPending || (usage ? usage.remaining <= 0 || (usage.daily_remaining ?? 1) <= 0 : false)}
             onClick={() => {
               const payload = validate();
               if (!payload) return;

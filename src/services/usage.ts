@@ -37,6 +37,9 @@ export function getQuotaExceeded(error: unknown): QuotaExceededDetail | null {
   return detail && typeof detail === 'object' && detail.code === 'quota_exceeded' ? (detail as QuotaExceededDetail) : null;
 }
 
-export function quotaExceededMessage(detail: Pick<LicenseUsage, 'used' | 'limit'>) {
-  return `Bạn đã hết lượt tải tháng này (${detail.used}/${detail.limit})`;
+export function quotaExceededMessage(detail: QuotaExceededDetail) {
+  if (detail.limit_type === 'daily') {
+    return `Đã hết lượt tải hôm nay (${detail.daily_used ?? detail.daily_limit}/${detail.daily_limit})`;
+  }
+  return `Đã hết lượt tải tháng này (${detail.used}/${detail.limit})`;
 }

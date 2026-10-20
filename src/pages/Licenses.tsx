@@ -10,7 +10,7 @@ import ErrorModal from '../components/ErrorModal';
 import LicenseDetailDrawer from '../components/LicenseDetailDrawer';
 import QuotaLimitModal from '../components/QuotaLimitModal';
 import { assignLicense, createLicense, deleteLicensesBatch, listLicenses, renewLicense, revokeLicense, setLicenseQuotaLimit } from '../services/licenses';
-import type { License } from '../types';
+import type { License, QuotaLimitPayload } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
 import { useToast } from '../components/Toasts';
 import { useAuth } from '../contexts/AuthContext';
@@ -119,7 +119,7 @@ export default function Licenses() {
   });
 
   const quotaMutation = useMutation({
-    mutationFn: ({ key, limit }: { key: string; limit: number | null }) => setLicenseQuotaLimit(key, limit),
+    mutationFn: ({ key, payload }: { key: string; payload: QuotaLimitPayload }) => setLicenseQuotaLimit(key, payload),
     onSuccess: (updated) => {
       setSelected((current) => (current?.license_key === updated.license_key ? updated : current));
       queryClient.invalidateQueries({ queryKey: ['licenses'] });
@@ -127,7 +127,7 @@ export default function Licenses() {
       push({
         type: 'success',
         title: 'Đã lưu giới hạn tải',
-        message: updated.custom_monthly_limit == null ? 'License dùng cấu hình chung.' : `Giới hạn riêng: ${updated.custom_monthly_limit} video/tháng.`
+        message: `Tháng: ${updated.custom_monthly_limit ?? 'theo cấu hình chung'} · Ngày: ${updated.custom_daily_limit ?? 'theo cấu hình chung'}`
       });
     },
     onError: (err: Error) => setError(err.message)
@@ -390,7 +390,7 @@ export default function Licenses() {
         open={openQuota}
         onOpenChange={setOpenQuota}
         license={selected}
-        onSubmit={(limit) => quotaMutation.mutateAsync({ key: selected?.license_key ?? '', limit })}
+        onSubmit={(payload) => quotaMutation.mutateAsync({ key: selected?.license_key ?? '', payload })}
       />
 
       <ErrorModal open={Boolean(error)} title="Server error" message={error ?? ''} onClose={() => setError(null)} />

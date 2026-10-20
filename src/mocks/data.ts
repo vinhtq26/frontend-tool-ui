@@ -68,24 +68,37 @@ export let licenses: License[] = [
   }
 ];
 
-export const quotaSettings: QuotaSettings = { free_monthly_downloads: 30, pro_monthly_downloads: 100 };
+export const quotaSettings: QuotaSettings = {
+  free_monthly_downloads: 30,
+  pro_monthly_downloads: 100,
+  free_daily_downloads: 10,
+  pro_daily_downloads: 20
+};
 const mockUsedCounts: Record<string, number> = { '9kS2f3_ABCxyzQ-001': 12, '9kS2f3_ABCxyzQ-003': 30 };
+const mockDailyCounts: Record<string, number> = { '9kS2f3_ABCxyzQ-001': 3, '9kS2f3_ABCxyzQ-003': 2 };
 
 export function buildUsage(license: License): LicenseUsage {
   const used = mockUsedCounts[license.license_key] ?? 0;
   const limit = license.custom_monthly_limit ?? quotaSettings.free_monthly_downloads;
+  const dailyUsed = mockDailyCounts[license.license_key] ?? 0;
+  const dailyLimit = license.custom_daily_limit ?? quotaSettings.free_daily_downloads;
   return {
     plan: 'free',
     plan_expiry: null,
     period: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
     used,
     limit,
-    remaining: Math.max(0, limit - used)
+    remaining: Math.max(0, limit - used),
+    daily_period: now.toISOString().slice(0, 10),
+    daily_used: dailyUsed,
+    daily_limit: dailyLimit,
+    daily_remaining: Math.max(0, dailyLimit - dailyUsed)
   };
 }
 
 export function recordDownload(license: License) {
   mockUsedCounts[license.license_key] = (mockUsedCounts[license.license_key] ?? 0) + 1;
+  mockDailyCounts[license.license_key] = (mockDailyCounts[license.license_key] ?? 0) + 1;
   license.usage = buildUsage(license);
 }
 

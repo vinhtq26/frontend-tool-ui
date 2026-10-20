@@ -63,7 +63,7 @@ export default function LicenseDetailDrawer({
               </div>
               <div className="card !p-4">
                 <p className="mb-2 text-xs text-slate-500">Lượt tải video tháng này</p>
-                <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} />
+                <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} customDaily={license.custom_daily_limit != null} />
               </div>
               <div className="card">
                 <p className="mb-3 text-sm font-semibold text-slate-900">Actions</p>

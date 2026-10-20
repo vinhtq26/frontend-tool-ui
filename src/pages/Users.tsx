@@ -415,7 +415,7 @@ export default function Users() {
                 </p>
                 <p className="text-xs text-slate-500">HWID: {license.hwid ?? '—'}</p>
                 {!license.is_active ? <p className="text-xs font-semibold text-rose-600">Đã khóa</p> : null}
-                <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} />
+                <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} customDaily={license.custom_daily_limit != null} />
               </div>
             ))}
           </div>

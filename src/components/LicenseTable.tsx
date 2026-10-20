@@ -53,7 +53,7 @@ export default function LicenseTable({
               <th className="px-4 py-3">Owner</th>
               <th className="px-4 py-3">HWID</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Usage (tháng)</th>
+              <th className="px-4 py-3">Usage</th>
               <th className="px-4 py-3">Duration (days)</th>
               <th className="px-4 py-3">Expiry date</th>
               <th className="px-4 py-3">Last check</th>
@@ -97,7 +97,7 @@ export default function LicenseTable({
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} compact />
+                      <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} customDaily={license.custom_daily_limit != null} compact />
                       {onEditQuota ? (
                         <button
                           type="button"
@@ -173,7 +173,7 @@ export default function LicenseTable({
               <span>Duration: {license.duration_days} days</span>
               <span>Expiry: {formatDate(license.expiry_date)}</span>
               <div className="col-span-2">
-                <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} compact />
+                <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} customDaily={license.custom_daily_limit != null} compact />
               </div>
             </div>
           </article>

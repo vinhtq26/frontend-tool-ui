@@ -5,6 +5,7 @@ import { getLicenseDetail, renewLicense, revokeLicense, setLicenseQuotaLimit } f
 import { formatDate } from '../utils/date';
 import { useToast } from '../components/Toasts';
 import UsageMeter from '../components/UsageMeter';
+import type { QuotaLimitPayload } from '../types';
 import QuotaLimitModal from '../components/QuotaLimitModal';
 
 export default function LicenseDetailPage() {
@@ -38,7 +39,7 @@ export default function LicenseDetailPage() {
   });
 
   const quotaMutation = useMutation({
-    mutationFn: (limit: number | null) => setLicenseQuotaLimit(key, limit),
+    mutationFn: (payload: QuotaLimitPayload) => setLicenseQuotaLimit(key, payload),
     onSuccess: (updated) => {
       queryClient.setQueryData(['license-detail', key], updated);
       queryClient.invalidateQueries({ queryKey: ['licenses'] });
@@ -77,7 +78,7 @@ export default function LicenseDetailPage() {
         </div>
         <div className="card !p-4 md:col-span-2">
           <p className="mb-2 text-sm text-slate-500">Lượt tải video tháng này</p>
-          <UsageMeter usage={item.usage} custom={item.custom_monthly_limit != null} />
+          <UsageMeter usage={item.usage} custom={item.custom_monthly_limit != null} customDaily={item.custom_daily_limit != null} />
         </div>
       </div>
       <div className="flex gap-2">
@@ -108,7 +109,7 @@ export default function LicenseDetailPage() {
         open={openQuota}
         onOpenChange={setOpenQuota}
         license={item}
-        onSubmit={(limit) => quotaMutation.mutateAsync(limit)}
+        onSubmit={(payload) => quotaMutation.mutateAsync(payload)}
       />
     </section>
   );
