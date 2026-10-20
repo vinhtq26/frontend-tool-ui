@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAuth, authStorage } from '../contexts/AuthContext';
 import { useToast } from '../components/Toasts';
+import QuotaSettingsCard from '../components/QuotaSettingsCard';
 
 type WorkspaceMode = 'focused' | 'balanced' | 'compact';
 
@@ -136,6 +137,8 @@ export default function Settings() {
               </div>
             </div>
           </article>
+
+          {role === 'admin' ? <QuotaSettingsCard /> : null}
 
           <article className="card">
             <div className="flex items-start gap-4">

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { addDays } from 'date-fns';
-import { appendAudit, applications, audits, buildUsage, licenses, recordDownload, users } from './data';
+import { appendAudit, applications, audits, buildUsage, licenses, quotaSettings, recordDownload, users } from './data';
 import type { License } from '../types';
 
 function normalizeUsername(value?: string) {
@@ -381,6 +381,21 @@ export const handlers = [
       return HttpResponse.json({ valid: false, license_key: null, expiry_date: null });
     }
     return HttpResponse.json({ valid: true, license_key: license.license_key, expiry_date: license.expiry_date });
+  }),
+
+  http.get('/admin/settings/quota', () => HttpResponse.json(quotaSettings)),
+
+  http.put('/admin/settings/quota', async ({ request }) => {
+    const body = (await request.json()) as Partial<typeof quotaSettings>;
+    const changes = Object.fromEntries(
+      Object.entries(body).filter(([key, value]) => key in quotaSettings && typeof value === 'number')
+    );
+    if (Object.keys(changes).length === 0) return HttpResponse.json({ detail: 'No fields to update' }, { status: 400 });
+    Object.assign(quotaSettings, changes);
+    licenses.forEach((license) => {
+      license.usage = buildUsage(license);
+    });
+    return HttpResponse.json(quotaSettings);
   }),
 
   http.get('/admin/licenses/:licenseKey/usage', ({ params }) => {

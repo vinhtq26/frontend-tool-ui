@@ -138,3 +138,8 @@ export interface TrendItem {
   week: string;
   activations: number;
 }
+
+export interface QuotaSettings {
+  free_monthly_downloads: number;
+  pro_monthly_downloads: number;
+}
