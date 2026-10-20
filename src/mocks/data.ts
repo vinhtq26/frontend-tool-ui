@@ -1,5 +1,5 @@
 import { addDays, subDays } from 'date-fns';
-import type { Application, AuditEvent, License, User } from '../types';
+import type { Application, AuditEvent, License, LicenseUsage, User } from '../types';
 
 const now = new Date();
 
@@ -67,6 +67,30 @@ export let licenses: License[] = [
     created_at: subDays(now, 12).toISOString()
   }
 ];
+
+const FREE_MONTHLY_LIMIT = 30;
+const mockUsedCounts: Record<string, number> = { '9kS2f3_ABCxyzQ-001': 12, '9kS2f3_ABCxyzQ-003': 30 };
+
+export function buildUsage(license: License): LicenseUsage {
+  const used = mockUsedCounts[license.license_key] ?? 0;
+  return {
+    plan: 'free',
+    plan_expiry: null,
+    period: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
+    used,
+    limit: FREE_MONTHLY_LIMIT,
+    remaining: Math.max(0, FREE_MONTHLY_LIMIT - used)
+  };
+}
+
+export function recordDownload(license: License) {
+  mockUsedCounts[license.license_key] = (mockUsedCounts[license.license_key] ?? 0) + 1;
+  license.usage = buildUsage(license);
+}
+
+licenses.forEach((license) => {
+  license.usage = buildUsage(license);
+});
 
 export let audits: AuditEvent[] = [
   {

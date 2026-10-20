@@ -26,7 +26,8 @@ api.interceptors.request.use((config) => {
   const token = authStorage.getToken();
   const adminToken = import.meta.env.VITE_ADMIN_TOKEN;
 
-  if (token && config.headers) {
+  // Client endpoints (/api/*) send their own license token, so don't overwrite it with the admin token.
+  if (token && config.headers && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 

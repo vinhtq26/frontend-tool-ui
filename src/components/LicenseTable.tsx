@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { License } from '../types';
 import LicenseRowActions from './LicenseRowActions';
+import UsageMeter from './UsageMeter';
 import { formatDate, getLicenseStatus } from '../utils/date';
 import { cn } from '../utils/cn';
 
@@ -49,6 +50,7 @@ export default function LicenseTable({
               <th className="px-4 py-3">Owner</th>
               <th className="px-4 py-3">HWID</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Usage (tháng)</th>
               <th className="px-4 py-3">Duration (days)</th>
               <th className="px-4 py-3">Expiry date</th>
               <th className="px-4 py-3">Last check</th>
@@ -86,6 +88,9 @@ export default function LicenseTable({
                       {status}
                     </span>
                   </td>
+                  <td className="px-4 py-3">
+                    <UsageMeter usage={license.usage} compact />
+                  </td>
                   <td className="px-4 py-3">{license.duration_days}</td>
                   <td className="px-4 py-3">{formatDate(license.expiry_date)}</td>
                   <td className="px-4 py-3">{formatDate(license.last_check)}</td>
@@ -95,6 +100,7 @@ export default function LicenseTable({
                       onAssign={() => onAssign(license)}
                       onRevoke={() => onRevoke(license)}
                       onRenew={() => onRenew(license)}
+                      locked={!license.is_active}
                     />
                   </td>
                 </tr>
@@ -136,6 +142,7 @@ export default function LicenseTable({
                 onAssign={() => onAssign(license)}
                 onRevoke={() => onRevoke(license)}
                 onRenew={() => onRenew(license)}
+                locked={!license.is_active}
               />
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
@@ -143,6 +150,9 @@ export default function LicenseTable({
               <span>HWID: {license.hwid ?? '-'}</span>
               <span>Duration: {license.duration_days} days</span>
               <span>Expiry: {formatDate(license.expiry_date)}</span>
+              <div className="col-span-2">
+                <UsageMeter usage={license.usage} compact />
+              </div>
             </div>
           </article>
         ))}

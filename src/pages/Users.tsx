@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { activateUser, createUser, deactivateUser, deleteUser, deleteUsersBatch, getUserLicenses, listUsers } from '../services/users';
 import type { License, User } from '../types';
 import { useToast } from '../components/Toasts';
+import UsageMeter from '../components/UsageMeter';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useAuth } from '../contexts/AuthContext';
 import { formatBatchItems } from '../utils/batchDelete';
@@ -413,6 +414,8 @@ export default function Users() {
                   License token: {license.license_token}
                 </p>
                 <p className="text-xs text-slate-500">HWID: {license.hwid ?? '—'}</p>
+                {!license.is_active ? <p className="text-xs font-semibold text-rose-600">Đã khóa</p> : null}
+                <UsageMeter usage={license.usage} />
               </div>
             ))}
           </div>

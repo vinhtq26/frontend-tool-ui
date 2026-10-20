@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getLicenseDetail, renewLicense, revokeLicense } from '../services/licenses';
 import { formatDate } from '../utils/date';
 import { useToast } from '../components/Toasts';
+import UsageMeter from '../components/UsageMeter';
 
 export default function LicenseDetailPage() {
   const { key = '' } = useParams();
@@ -20,7 +21,7 @@ export default function LicenseDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['license-detail', key] });
       queryClient.invalidateQueries({ queryKey: ['licenses'] });
-      push({ type: 'success', title: 'License revoked' });
+      push({ type: 'success', title: 'Đã khóa key', message: 'License không thể đăng nhập hay tải video nữa.' });
     }
   });
 
@@ -61,6 +62,10 @@ export default function LicenseDetailPage() {
           <p className="text-sm text-slate-500">Last check</p>
           <p className="mt-1 font-semibold text-slate-900">{formatDate(item.last_check)}</p>
         </div>
+        <div className="card !p-4 md:col-span-2">
+          <p className="mb-2 text-sm text-slate-500">Lượt tải video tháng này</p>
+          <UsageMeter usage={item.usage} />
+        </div>
       </div>
       <div className="flex gap-2">
         <button
@@ -73,8 +78,14 @@ export default function LicenseDetailPage() {
         >
           Renew
         </button>
-        <button className="btn-primary bg-rose-600 hover:bg-rose-500" onClick={() => revokeMutation.mutate(key)}>
-          Revoke
+        <button
+          className="btn-primary bg-rose-600 hover:bg-rose-500 disabled:opacity-50"
+          disabled={!item.is_active || revokeMutation.isPending}
+          onClick={() => {
+            if (window.confirm('Khóa key này? License sẽ bị chặn đăng nhập và tải video ngay lập tức.')) revokeMutation.mutate(key);
+          }}
+        >
+          {item.is_active ? 'Khóa key' : 'Đã khóa'}
         </button>
       </div>
     </section>

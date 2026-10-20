@@ -12,7 +12,8 @@ const sample = [
     is_active: true,
     duration_days: 30,
     expiry_date: '2026-05-16T12:34:56Z',
-    last_check: '2026-04-16T12:00:00Z'
+    last_check: '2026-04-16T12:00:00Z',
+    usage: { plan: 'free' as const, plan_expiry: null, period: '2026-10', used: 12, limit: 30, remaining: 18 }
   }
 ];
 
@@ -33,6 +34,7 @@ describe('LicenseTable', () => {
     expect(screen.getByText('HWID')).toBeInTheDocument();
     expect(screen.getAllByText('ABC-123')).toHaveLength(2);
     expect(screen.getByText('alice')).toBeInTheDocument();
+    expect(screen.getAllByText('12/30')).toHaveLength(2);
   });
 
   it('calls action handlers from row menu', async () => {

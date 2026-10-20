@@ -35,6 +35,44 @@ export interface License {
   expiry_date: string | null;
   last_check: string | null;
   created_at?: string;
+  plan_expiry?: string | null;
+  usage?: LicenseUsage | null;
+}
+
+export type LicensePlan = 'free' | 'pro';
+
+export interface LicenseUsage {
+  plan: LicensePlan;
+  plan_expiry: string | null;
+  period: string;
+  used: number;
+  limit: number;
+  remaining: number;
+}
+
+export interface ClientCredentials {
+  license_token: string;
+  machine_id: string;
+}
+
+export interface ResolveVideoRequest extends ClientCredentials {
+  video_id: string;
+}
+
+export interface ResolveVideoResponse {
+  video_id: string;
+  url: string;
+  content_key_hex: string;
+  quality: string;
+  duration: string;
+  expires_at: number;
+  customer: string;
+  signature: string;
+}
+
+export interface QuotaExceededDetail extends LicenseUsage {
+  code: 'quota_exceeded';
+  message: string;
 }
 
 export interface KeyAuthRequest {

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { addDays } from 'date-fns';
-import { appendAudit, applications, audits, licenses, users } from './data';
+import { appendAudit, applications, audits, buildUsage, licenses, recordDownload, users } from './data';
 import type { License } from '../types';
 
 function normalizeUsername(value?: string) {
@@ -25,6 +25,16 @@ function decodeToken(token?: string) {
   } catch {
     return null;
   }
+}
+
+async function findClientLicense(request: Request) {
+  const body = (await request.json()) as Record<string, string | undefined>;
+  const token = request.headers.get('Authorization')?.replace('Bearer ', '') || body.license_token;
+  const machineId = body.machine_id ?? body.hwid;
+  const license = licenses.find((item) => item.license_token === token);
+  if (!license || !license.is_active) return { body, error: HttpResponse.json({ detail: 'license revoked' }, { status: 403 }) };
+  if (license.hwid && machineId !== license.hwid) return { body, error: HttpResponse.json({ detail: 'machine mismatch' }, { status: 403 }) };
+  return { body, license };
 }
 
 function buildLicenseToken() {
@@ -371,6 +381,49 @@ export const handlers = [
       return HttpResponse.json({ valid: false, license_key: null, expiry_date: null });
     }
     return HttpResponse.json({ valid: true, license_key: license.license_key, expiry_date: license.expiry_date });
+  }),
+
+  http.get('/admin/licenses/:licenseKey/usage', ({ params }) => {
+    const item = licenses.find((license) => license.license_key === params.licenseKey);
+    if (!item) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
+    return HttpResponse.json(buildUsage(item));
+  }),
+
+  http.post('/api/usage', async ({ request }) => {
+    const { license, error } = await findClientLicense(request);
+    if (error) return error;
+    return HttpResponse.json(buildUsage(license));
+  }),
+
+  http.post('/api/resolve-video', async ({ request }) => {
+    const { body, license, error } = await findClientLicense(request);
+    if (error) return error;
+    const videoId = body.video_id ?? body.vid;
+    if (!videoId) return HttpResponse.json({ detail: 'video_id is required' }, { status: 400 });
+    const usage = buildUsage(license);
+    if (usage.remaining <= 0) {
+      return HttpResponse.json(
+        {
+          detail: {
+            code: 'quota_exceeded',
+            message: `Monthly download limit reached (${usage.used}/${usage.limit} episodes)`,
+            ...usage
+          }
+        },
+        { status: 429 }
+      );
+    }
+    recordDownload(license);
+    return HttpResponse.json({
+      video_id: videoId,
+      url: `https://cdn.mock.local/${videoId}.m3u8`,
+      content_key_hex: '00112233445566778899aabbccddeeff',
+      quality: '1080p',
+      duration: '00:42:00',
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      customer: license.owner_username ?? 'unknown',
+      signature: 'mock-signature'
+    });
   }),
 
   http.get('/my/licenses', ({ request }) => {
