@@ -1,5 +1,5 @@
 import { addDays, subDays } from 'date-fns';
-import type { Application, AuditEvent, License, LicenseUsage, User } from '../types';
+import type { Application, AuditEvent, License, LicenseUsage, QuotaSettings, User } from '../types';
 
 const now = new Date();
 
@@ -68,18 +68,19 @@ export let licenses: License[] = [
   }
 ];
 
-const FREE_MONTHLY_LIMIT = 30;
+export const quotaSettings: QuotaSettings = { free_monthly_downloads: 30, pro_monthly_downloads: 100 };
 const mockUsedCounts: Record<string, number> = { '9kS2f3_ABCxyzQ-001': 12, '9kS2f3_ABCxyzQ-003': 30 };
 
 export function buildUsage(license: License): LicenseUsage {
   const used = mockUsedCounts[license.license_key] ?? 0;
+  const limit = quotaSettings.free_monthly_downloads;
   return {
     plan: 'free',
     plan_expiry: null,
     period: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
     used,
-    limit: FREE_MONTHLY_LIMIT,
-    remaining: Math.max(0, FREE_MONTHLY_LIMIT - used)
+    limit,
+    remaining: Math.max(0, limit - used)
   };
 }
 

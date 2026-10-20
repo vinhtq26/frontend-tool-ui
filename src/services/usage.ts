@@ -1,6 +1,6 @@
 import axios from 'axios';
 import api from '../api/axios';
-import type { ClientCredentials, LicenseUsage, QuotaExceededDetail, ResolveVideoRequest, ResolveVideoResponse } from '../types';
+import type { ClientCredentials, LicenseUsage, QuotaSettings, QuotaExceededDetail, ResolveVideoRequest, ResolveVideoResponse } from '../types';
 
 function clientAuth(licenseToken: string) {
   return { headers: { Authorization: `Bearer ${licenseToken}` } };
@@ -8,6 +8,16 @@ function clientAuth(licenseToken: string) {
 
 export async function getLicenseUsage(licenseKey: string) {
   const { data } = await api.get<LicenseUsage>(`/admin/licenses/${licenseKey}/usage`);
+  return data;
+}
+
+export async function getQuotaSettings() {
+  const { data } = await api.get<QuotaSettings>('/admin/settings/quota');
+  return data;
+}
+
+export async function updateQuotaSettings(payload: Partial<QuotaSettings>) {
+  const { data } = await api.put<QuotaSettings>('/admin/settings/quota', payload);
   return data;
 }
 
