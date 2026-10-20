@@ -398,6 +398,15 @@ export const handlers = [
     return HttpResponse.json(quotaSettings);
   }),
 
+  http.put('/admin/licenses/:licenseKey/quota-limit', async ({ params, request }) => {
+    const body = (await request.json()) as { monthly_limit: number | null };
+    const item = licenses.find((license) => license.license_key === params.licenseKey);
+    if (!item) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });
+    item.custom_monthly_limit = body.monthly_limit;
+    item.usage = buildUsage(item);
+    return HttpResponse.json(item);
+  }),
+
   http.get('/admin/licenses/:licenseKey/usage', ({ params }) => {
     const item = licenses.find((license) => license.license_key === params.licenseKey);
     if (!item) return HttpResponse.json({ detail: 'Not found' }, { status: 404 });

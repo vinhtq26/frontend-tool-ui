@@ -6,10 +6,11 @@ interface LicenseRowActionsProps {
   onAssign: () => void;
   onRevoke: () => void;
   onRenew: () => void;
+  onEditQuota?: () => void;
   locked?: boolean;
 }
 
-export default function LicenseRowActions({ onView, onAssign, onRevoke, onRenew, locked = false }: LicenseRowActionsProps) {
+export default function LicenseRowActions({ onView, onAssign, onRevoke, onRenew, onEditQuota, locked = false }: LicenseRowActionsProps) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger className="rounded-lg p-1 text-slate-500 hover:bg-slate-100">
@@ -26,6 +27,11 @@ export default function LicenseRowActions({ onView, onAssign, onRevoke, onRenew,
           <DropdownMenu.Item className="cursor-pointer rounded-lg px-3 py-2 text-sm hover:bg-slate-100" onClick={onRenew}>
             Renew
           </DropdownMenu.Item>
+          {onEditQuota ? (
+            <DropdownMenu.Item className="cursor-pointer rounded-lg px-3 py-2 text-sm hover:bg-slate-100" onClick={onEditQuota}>
+              Giới hạn tải
+            </DropdownMenu.Item>
+          ) : null}
           <DropdownMenu.Item
             className="cursor-pointer rounded-lg px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 data-[disabled]:cursor-not-allowed data-[disabled]:text-slate-400 data-[disabled]:hover:bg-transparent"
             disabled={locked}

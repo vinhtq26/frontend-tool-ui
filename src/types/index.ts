@@ -36,6 +36,7 @@ export interface License {
   last_check: string | null;
   created_at?: string;
   plan_expiry?: string | null;
+  custom_monthly_limit?: number | null;
   usage?: LicenseUsage | null;
 }
 

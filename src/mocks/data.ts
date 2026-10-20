@@ -73,7 +73,7 @@ const mockUsedCounts: Record<string, number> = { '9kS2f3_ABCxyzQ-001': 12, '9kS2
 
 export function buildUsage(license: License): LicenseUsage {
   const used = mockUsedCounts[license.license_key] ?? 0;
-  const limit = quotaSettings.free_monthly_downloads;
+  const limit = license.custom_monthly_limit ?? quotaSettings.free_monthly_downloads;
   return {
     plan: 'free',
     plan_expiry: null,

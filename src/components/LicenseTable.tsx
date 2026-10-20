@@ -14,6 +14,7 @@ interface LicenseTableProps {
   onAssign: (item: License) => void;
   onRevoke: (item: License) => void;
   onRenew: (item: License) => void;
+  onEditQuota?: (item: License) => void;
 }
 
 export default function LicenseTable({
@@ -24,7 +25,8 @@ export default function LicenseTable({
   onView,
   onAssign,
   onRevoke,
-  onRenew
+  onRenew,
+  onEditQuota
 }: LicenseTableProps) {
   const rows = useMemo(() => licenses ?? [], [licenses]);
   const allSelected = rows.length > 0 && rows.every((license) => selectedIds.has(license.id));
@@ -89,7 +91,7 @@ export default function LicenseTable({
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <UsageMeter usage={license.usage} compact />
+                    <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} compact />
                   </td>
                   <td className="px-4 py-3">{license.duration_days}</td>
                   <td className="px-4 py-3">{formatDate(license.expiry_date)}</td>
@@ -100,6 +102,7 @@ export default function LicenseTable({
                       onAssign={() => onAssign(license)}
                       onRevoke={() => onRevoke(license)}
                       onRenew={() => onRenew(license)}
+                      onEditQuota={onEditQuota ? () => onEditQuota(license) : undefined}
                       locked={!license.is_active}
                     />
                   </td>
@@ -142,6 +145,7 @@ export default function LicenseTable({
                 onAssign={() => onAssign(license)}
                 onRevoke={() => onRevoke(license)}
                 onRenew={() => onRenew(license)}
+                onEditQuota={onEditQuota ? () => onEditQuota(license) : undefined}
                 locked={!license.is_active}
               />
             </div>
@@ -151,7 +155,7 @@ export default function LicenseTable({
               <span>Duration: {license.duration_days} days</span>
               <span>Expiry: {formatDate(license.expiry_date)}</span>
               <div className="col-span-2">
-                <UsageMeter usage={license.usage} compact />
+                <UsageMeter usage={license.usage} custom={license.custom_monthly_limit != null} compact />
               </div>
             </div>
           </article>
