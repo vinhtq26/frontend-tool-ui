@@ -11,7 +11,7 @@ const api = axios.create({
   // In mock mode, keep requests same-origin so the MSW service worker can intercept them.
   // Otherwise always call the configured backend directly instead of going through a frontend proxy.
   baseURL: resolvedBaseURL,
-  timeout: 10_000,
+  timeout: 30_000,
   withCredentials: true
 });
 
